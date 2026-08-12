@@ -5,7 +5,7 @@
 
 The **free, open-source, self-hostable** edition of **Zedtreeo Workforce** — **workforce management software for SMEs, anywhere in the world.** Run your own people, attendance, leave, payroll, onboarding, and client-billing platform — and because it's your code, it's **fully customizable** to how your business works.
 
-> 🌐 **Hosted version, Pro features & priority support →** **[zedtreeo.com](https://zedtreeo.com)**
+> 💼 **Beyond self-host — a commercial (non-AGPL) license, hosting, or the full product?** → [support@zedtreeo.com](mailto:support@zedtreeo.com)
 > 🟢 **Live demo →** **https://demo.zedtreeo.io/login**
 > 🐳 **Docker images →** [`workforce-community-api`](https://hub.docker.com/r/zedtreeo1/workforce-community-api) · [`workforce-community-web`](https://hub.docker.com/r/zedtreeo1/workforce-community-web)
 
@@ -23,17 +23,22 @@ The **free, open-source, self-hostable** edition of **Zedtreeo Workforce** — *
 - 🙋 **Self-service portals** for employees & clients
 - 📚 **Knowledge base**
 
-### Community vs Pro
+### Community Edition vs the full product
 
-| | Community (free, self-host) | Pro / Cloud ([zedtreeo.com](https://zedtreeo.com)) |
+The Community Edition is the complete core you can self-host for free. Our internal
+Zedtreeo Workforce build has additional modules:
+
+| | Community (free, self-host) | Full product |
 |---|:---:|:---:|
-| Core HRMS (above) | ✅ | ✅ |
-| AI HR & Billing Assistant | — | ✅ |
-| Calling / Chat / Groups | — | ✅ |
+| Core platform (above) | ✅ | ✅ |
+| AI HR & billing assistant | — | ✅ |
+| Calling / chat / groups | — | ✅ |
 | Advanced statutory payroll (configurable tax & compliance) | — | ✅ |
 | Appraisal cycles → auto pay-revisions | — | ✅ |
 | Multi-entity & advanced invoicing | — | ✅ |
-| Managed hosting + priority support | — | ✅ |
+
+> A **commercial (non-AGPL) license**, **managed hosting**, and **support** are
+> available **on request** — [get in touch](mailto:support@zedtreeo.com).
 
 ---
 
@@ -77,7 +82,7 @@ PRs welcome — see [CONTRIBUTING.md](./CONTRIBUTING.md). A lightweight **CLA** 
 
 - **Community:** [GitHub issues](https://github.com/Zedtreeo/workforce-community/issues) (best-effort)
 - **Feedback & feature requests:** **[support@zedtreeo.com](mailto:support@zedtreeo.com)**
-- **Priority support & managed hosting:** **[zedtreeo.com](https://zedtreeo.com)**
+- **Commercial license, hosting or support:** enquiries → **[support@zedtreeo.com](mailto:support@zedtreeo.com)**
 
 ---
 
