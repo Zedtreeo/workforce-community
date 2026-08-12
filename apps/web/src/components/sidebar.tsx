@@ -23,7 +23,6 @@ interface NavItem {
 
 const adminNavItems: NavItem[] = [
   { label: 'Dashboard', href: '/dashboard', icon: <LayoutDashboard size={18} />, group: 'Overview' },
-  { label: 'Assistant', href: '/assistant', icon: <Sparkles size={18} />, group: 'Overview', minRole: 'MANAGER' },
   {
     label: 'Users', href: '/users', icon: <UserCog size={18} />, group: 'Overview',
     children: [
@@ -39,7 +38,6 @@ const adminNavItems: NavItem[] = [
     children: [
       { label: 'Summary', href: '/attendance/summary', icon: <Gauge size={16} />, group: 'People' },
       { label: 'Monthly', href: '/attendance/monthly', icon: <CalendarClock size={16} />, group: 'People' },
-      { label: 'Screenshots', href: '/attendance/screenshots', icon: <Camera size={16} />, group: 'People' },
     ],
   },
   { label: 'Leaves', href: '/leaves', icon: <TreePalm size={18} />, group: 'People' },
@@ -49,25 +47,18 @@ const adminNavItems: NavItem[] = [
   { label: 'Shifts', href: '/shifts', icon: <CalendarClock size={18} />, group: 'People' },
   { label: 'Pay Structure', href: '/payroll/pay-structures', icon: <FileText size={18} />, group: 'People' },
   { label: 'Pay Heads', href: '/payroll/pay-heads', icon: <ListChecks size={18} />, group: 'People' },
-  { label: 'Appraisals', href: '/appraisals', icon: <TrendingUp size={18} />, group: 'People' },
 
   { label: 'Clients', href: '/clients', icon: <Briefcase size={18} />, group: 'Business' },
   { label: 'Invoices', href: '/invoices', icon: <Receipt size={18} />, group: 'Business' },
   { label: 'Billing Entities', href: '/invoices/billing-entities', icon: <Building2 size={18} />, group: 'Business' },
 
   { label: 'Payroll', href: '/payroll/workflow', icon: <Landmark size={18} />, group: 'Finance' },
-  { label: 'Tax / TDS', href: '/payroll/tax', icon: <Percent size={18} />, group: 'Finance' },
-  { label: 'IT Declarations', href: '/it-declarations', icon: <FileText size={18} />, group: 'Finance' },
-  { label: 'Tax Config', href: '/tax-config', icon: <Landmark size={18} />, group: 'Finance' },
-  { label: 'Tax Forms', href: '/tax-forms', icon: <FileText size={18} />, group: 'Finance' },
   { label: 'Reports', href: '/reports', icon: <BarChart3 size={18} />, group: 'Finance' },
 
-  { label: 'Shared Mail', href: '/mailbox-access', icon: <Mails size={18} />, group: 'Admin', minRole: 'ADMIN' },
   { label: 'Documents', href: '/documents', icon: <FolderOpen size={18} />, group: 'Admin' },
   { label: 'Holidays', href: '/holidays', icon: <CalendarDays size={18} />, group: 'Admin' },
   { label: 'Audit Log', href: '/audit', icon: <ScrollText size={18} />, group: 'Admin' },
   { label: 'Knowledge Base', href: '/knowledge-base', icon: <BookOpen size={18} />, group: 'Admin' },
-  { label: 'Troubleshoot', href: '/troubleshoot', icon: <Wrench size={18} />, group: 'Admin', minRole: 'ADMIN' },
 ];
 
 const portalNavItems: NavItem[] = [
@@ -78,9 +69,6 @@ const portalNavItems: NavItem[] = [
   { label: 'Assignments', href: '/portal/assignments', icon: <ClipboardList size={18} />, group: 'Portal' },
   { label: 'My Shift', href: '/portal/shift', icon: <CalendarClock size={18} />, group: 'Portal' },
   { label: 'Pay Structure', href: '/portal/pay-structure', icon: <Landmark size={18} />, group: 'Portal' },
-  { label: 'Appraisal', href: '/portal/appraisal', icon: <TrendingUp size={18} />, group: 'Portal' },
-  { label: 'Tax Declaration', href: '/portal/it-declaration', icon: <FileText size={18} />, group: 'Portal' },
-  { label: 'Tax Documents', href: '/portal/tax-documents', icon: <Download size={18} />, group: 'Portal' },
   { label: 'Holidays', href: '/portal/holidays', icon: <CalendarDays size={18} />, group: 'Portal' },
   { label: 'My Profile', href: '/portal/profile', icon: <UserCircle size={18} />, group: 'Portal' },
   { label: 'Knowledge Base', href: '/portal/knowledge-base', icon: <BookOpen size={18} />, group: 'Portal' },

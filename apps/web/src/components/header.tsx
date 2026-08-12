@@ -5,9 +5,6 @@ import { useRouter } from 'next/navigation';
 import { useSession, signOut } from '../lib/auth-client';
 import { apiFetch } from '../lib/api';
 import { Bell, LogOut, Search, Menu } from 'lucide-react';
-import { CallPicker } from './calling/call-picker';
-import { ChatButton } from './chat/chat-button';
-import { InstallAppButton } from './install-app-button';
 
 interface Notification {
   id: string;
@@ -129,15 +126,6 @@ export function Header({ onMenuClick }: HeaderProps) {
         <button className="h-8 w-8 rounded-lg flex items-center justify-center text-content-tertiary hover:bg-surface-100 hover:text-content-secondary transition-colors md:hidden">
           <Search size={18} />
         </button>
-
-        {/* Install as app (hidden when already installed) */}
-        <InstallAppButton />
-
-        {/* Messages */}
-        <ChatButton />
-
-        {/* Start a call */}
-        <CallPicker />
 
         {/* Notifications */}
         <div className="relative" ref={dropdownRef}>

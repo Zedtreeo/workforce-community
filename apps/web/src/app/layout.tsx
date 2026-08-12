@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
-import { PwaRegister } from '@/components/pwa-register';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -34,7 +33,6 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <PwaRegister />
         {children}
       </body>
     </html>
