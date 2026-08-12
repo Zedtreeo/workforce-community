@@ -1,7 +1,10 @@
 # deps / build
 node_modules/
+.pnpm-store/
 dist/
 .next/
+.turbo/
+out/
 coverage/
 *.tsbuildinfo
 
@@ -9,10 +12,27 @@ coverage/
 .env
 .env.*
 !.env.example
+.env.selfhosted
+deploy-secret*
+*secret*.txt
+*.credentials
 *.pem
 *.key
 ssh-keys/
 
+# uploads / data exports / PII
+uploads/
+*.csv
+
+# docker volumes
+postgres_data/
+redis_data/
+minio_data/
+
 # os / editor
 .DS_Store
+Thumbs.db
 *.log
+.vscode/
+.idea/
+*.swp

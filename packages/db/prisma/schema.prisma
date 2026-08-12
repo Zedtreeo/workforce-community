@@ -1,0 +1,1959 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-arm64-openssl-3.0.x", "linux-musl-arm64-openssl-3.0.x", "debian-openssl-3.0.x", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// CORE MODELS — Tenant + User + Auth
+// ============================================================
+
+model Tenant {
+  id        String    @id @default(cuid())
+  name      String
+  slug      String    @unique
+  domain    String?   @unique
+  logo      String?
+  plan      Plan      @default(STARTER)
+  currency  String    @default("INR")
+  timezone  String    @default("Asia/Kolkata")
+  gstNumber String?   @map("gst_number")
+  panNumber String?   @map("pan_number")
+  tanNumber String?   @map("tan_number")
+  pfNumber  String?   @map("pf_number")
+  esiNumber String?   @map("esi_number")
+  website   String?
+  phone     String?
+  address   String?
+  isActive  Boolean   @default(true) @map("is_active")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  users                      User[]
+  employees                  Employee[]
+  departments                Department[]
+  clients                    Client[]
+  attendance                 Attendance[]
+  monthlyAttendanceOverrides MonthlyAttendanceOverride[]
+  assignments                EmployeeAssignment[]
+  invoices                   Invoice[]
+  timeLogs                   TimeLog[]
+  activitySnapshots          ActivitySnapshot[]
+  leaveTypes                 LeaveType[]
+  leaveBalances              LeaveBalance[]
+  leaveRequests              LeaveRequest[]
+  notifications              Notification[]
+  salaryStructures           SalaryStructure[]
+  payrollRuns                PayrollRun[]
+  payslips                   Payslip[]
+  documentCategories         DocumentCategory[]
+  employeeDocuments          EmployeeDocument[]
+  holidays                   Holiday[]
+  shiftTypes                 ShiftType[]
+  employeeShifts             EmployeeShift[]
+  auditLogs                  AuditLog[]
+  clientPortalUsers          ClientPortalUser[]
+  payHeads                   PayHead[]
+  payStructureTemplates      PayStructureTemplate[]
+  payStructureAssignments    PayStructureAssignment[]
+  itDeclarations             ItDeclaration[]
+  profileChangeRequests      ProfileChangeRequest[]
+  helpContents               HelpContent[]
+  kbArticles                 KbArticle[]
+  offerLetters               OfferLetter[]
+  attendanceImportBatches    AttendanceImportBatch[]
+  letterTemplates            LetterTemplate[]
+  generatedLetters           GeneratedLetter[]
+  letterSettings             TenantLetterSettings?
+  invoiceSettings            TenantInvoiceSettings?
+  billingEntities            BillingEntity[]
+  invoiceEmailTemplates      InvoiceEmailTemplate[]
+
+  invoicePayments InvoicePayment[]
+  calls           Call[]
+  messages        Message[]
+  groups          Group[]
+  mailboxAccess   MailboxAccess[]
+
+  appraisalCycles   AppraisalCycle[]
+  appraisalSettings AppraisalSettings?
+
+  @@map("tenants")
+}
+
+model User {
+  id              String    @id @default(cuid())
+  tenantId        String    @map("tenant_id")
+  email           String
+  name            String
+  emailVerified   Boolean   @default(false) @map("email_verified")
+  image           String?
+  avatarUrl       String?   @map("avatar_url")
+  role            UserRole  @default(MEMBER)
+  isActive        Boolean   @default(true) @map("is_active")
+  // Per-user module restriction: null = follow access profile / role;
+  // {"mode":"allow"|"deny","modules":["invoices","client-portal",...]}
+  moduleScopes    Json?     @map("module_scopes")
+  // Named access profile (role + module set); per-user moduleScopes overrides it
+  accessProfileId String?   @map("access_profile_id")
+  lastLoginAt     DateTime? @map("last_login_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  deletedAt       DateTime? @map("deleted_at")
+
+  tenant        Tenant         @relation(fields: [tenantId], references: [id])
+  accessProfile AccessProfile? @relation(fields: [accessProfileId], references: [id], onDelete: SetNull)
+  sessions      Session[]
+  accounts      Account[]
+  notifications Notification[]
+
+  managedClients Client[] @relation("ClientAccountManager")
+
+  @@unique([tenantId, email])
+  @@index([tenantId])
+  @@index([email])
+  @@index([accessProfileId])
+  @@map("users")
+}
+
+// Named access role: base UserRole + optional module scopes. Assigning a
+// profile stamps its baseRole onto the user; scopes resolve live so editing
+// a profile updates everyone on it.
+model AccessProfile {
+  id          String   @id @default(cuid())
+  tenantId    String   @map("tenant_id")
+  name        String
+  description String?
+  baseRole    UserRole @default(MEMBER) @map("base_role")
+  scopes      Json?
+  isSystem    Boolean  @default(false) @map("is_system")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  users User[]
+
+  @@unique([tenantId, name])
+  @@index([tenantId])
+  @@map("access_profiles")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  token     String   @unique
+  expiresAt DateTime @map("expires_at")
+  ipAddress String?  @map("ip_address")
+  userAgent String?  @map("user_agent")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+  @@map("sessions")
+}
+
+model Account {
+  id                    String    @id @default(cuid())
+  userId                String    @map("user_id")
+  accountId             String    @map("account_id")
+  providerId            String    @map("provider_id")
+  accessToken           String?   @map("access_token")
+  refreshToken          String?   @map("refresh_token")
+  accessTokenExpiresAt  DateTime? @map("access_token_expires_at")
+  refreshTokenExpiresAt DateTime? @map("refresh_token_expires_at")
+  scope                 String?
+  idToken               String?   @map("id_token")
+  password              String?
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("accounts")
+}
+
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime @map("expires_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@map("verifications")
+}
+
+// ============================================================
+// HR MODELS — Employee + Department
+// ============================================================
+
+model Employee {
+  id                 String            @id @default(cuid())
+  tenantId           String            @map("tenant_id")
+  employeeCode       String            @map("employee_code")
+  firstName          String            @map("first_name")
+  lastName           String            @map("last_name")
+  email              String
+  phone              String?
+  designation        String?
+  departmentId       String?           @map("department_id")
+  joinDate           DateTime          @map("join_date")
+  exitDate           DateTime?         @map("exit_date")
+  status             EmployeeStatus    @default(ACTIVE)
+  engagementType     EngagementType    @default(EMPLOYEE) @map("engagement_type")
+  consultantTdsRate  Decimal           @default(2) @map("consultant_tds_rate") @db.Decimal(5, 2)
+  taxRegime          TaxRegime         @default(NEW) @map("tax_regime")
+  salary             Decimal           @db.Decimal(12, 2)
+  pfNumber           String?           @map("pf_number")
+  esiNumber          String?           @map("esi_number")
+  panNumber          String?           @map("pan_number")
+  bankAccount        String?           @map("bank_account")
+  bankIfsc           String?           @map("bank_ifsc")
+  bankName           String?           @map("bank_name")
+  bankBranch         String?           @map("bank_branch")
+  createdAt          DateTime          @default(now()) @map("created_at")
+  updatedAt          DateTime          @updatedAt @map("updated_at")
+  deletedAt          DateTime?         @map("deleted_at")
+  createdBy          String?           @map("created_by")
+  updatedBy          String?           @map("updated_by")
+  onboardingStatus   OnboardingStatus? @map("onboarding_status")
+  reportingManagerId String?           @map("reporting_manager_id")
+  inviteToken        String?           @unique @map("invite_token")
+  inviteExpiresAt    DateTime?         @map("invite_expires_at")
+  offerAcceptedAt    DateTime?         @map("offer_accepted_at")
+  accruedLeaveMonths Int               @default(0) @map("accrued_leave_months")
+
+  tenant                     Tenant                      @relation(fields: [tenantId], references: [id])
+  department                 Department?                 @relation(fields: [departmentId], references: [id])
+  reportingManager           Employee?                   @relation("EmployeeReporting", fields: [reportingManagerId], references: [id])
+  reports                    Employee[]                  @relation("EmployeeReporting")
+  attendance                 Attendance[]
+  monthlyAttendanceOverrides MonthlyAttendanceOverride[]
+  assignments                EmployeeAssignment[]
+  timeLogs                   TimeLog[]
+  activitySnapshots          ActivitySnapshot[]
+  leaveBalances              LeaveBalance[]
+  leaveRequests              LeaveRequest[]
+  salaryStructures           SalaryStructure[]
+  payslips                   Payslip[]
+  documents                  EmployeeDocument[]
+  shifts                     EmployeeShift[]
+  payStructureAssignments    PayStructureAssignment[]
+  itDeclarations             ItDeclaration[]
+  profileChangeRequests      ProfileChangeRequest[]
+  offerLetter                OfferLetter?
+  GeneratedLetter            GeneratedLetter[]
+  appraisalCycles            AppraisalCycle[]
+
+  approvalStatus EmployeeApprovalStatus @default(APPROVED) @map("approval_status")
+  approvedBy     String?                @map("approved_by")
+  approvedAt     DateTime?              @map("approved_at")
+  rejectedAt     DateTime?              @map("rejected_at")
+  rejectedReason String?                @map("rejected_reason")
+  submittedAt    DateTime?              @map("submitted_at")
+
+  @@unique([tenantId, employeeCode])
+  @@unique([tenantId, email])
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@index([tenantId, departmentId])
+  @@index([tenantId, deletedAt])
+  @@map("employees")
+}
+
+model Department {
+  id        String    @id @default(cuid())
+  tenantId  String    @map("tenant_id")
+  name      String
+  code      String
+  headId    String?   @map("head_id")
+  isActive  Boolean   @default(true) @map("is_active")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  tenant    Tenant     @relation(fields: [tenantId], references: [id])
+  employees Employee[]
+
+  @@unique([tenantId, code])
+  @@index([tenantId])
+  @@index([tenantId, deletedAt])
+  @@map("departments")
+}
+
+// ============================================================
+// BILLING MODELS — Client (invoice + payment models come later)
+// ============================================================
+
+model Client {
+  id                String    @id @default(cuid())
+  tenantId          String    @map("tenant_id")
+  name              String
+  firstName         String?   @map("first_name") // primary contact first name
+  lastName          String?   @map("last_name") // primary contact last name
+  email             String
+  country           String
+  currency          String    @default("USD")
+  billingEmail      String?   @map("billing_email")
+  payoneerEmail     String?   @map("payoneer_email")
+  website           String?   @map("website")
+  registeredAddress String?   @map("registered_address")
+  signatoryName     String?   @map("signatory_name")
+  contactNumber     String?   @map("contact_number")
+  portalEnabled     Boolean   @default(false) @map("portal_enabled") // client portal (email-OTP) access
+  isActive          Boolean   @default(true) @map("is_active")
+  // Which legal entity bills this client (null = tenant default entity)
+  billingEntityId   String?   @map("billing_entity_id")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+  deletedAt         DateTime? @map("deleted_at")
+
+  tenant          Tenant               @relation(fields: [tenantId], references: [id])
+  billingEntity   BillingEntity?       @relation(fields: [billingEntityId], references: [id], onDelete: SetNull)
+  assignments     EmployeeAssignment[]
+  invoices        Invoice[]
+  portalUsers     ClientPortalUser[]
+  GeneratedLetter GeneratedLetter[]
+
+  accountManagerId String? @map("account_manager_id")
+  accountManager   User?   @relation("ClientAccountManager", fields: [accountManagerId], references: [id])
+
+  @@unique([tenantId, email])
+  @@index([tenantId])
+  @@index([tenantId, isActive])
+  @@index([tenantId, deletedAt])
+  @@map("clients")
+}
+
+// ============================================================
+// EMPLOYEE ASSIGNMENT — Employee deployed to Client with billing rate
+// ============================================================
+
+model EmployeeAssignment {
+  id                 String           @id @default(cuid())
+  tenantId           String           @map("tenant_id")
+  employeeId         String           @map("employee_id")
+  clientId           String           @map("client_id")
+  role               String? // Client-facing role (may differ from employee.designation)
+  startDate          DateTime         @map("start_date")
+  endDate            DateTime?        @map("end_date")
+  billingRate        Decimal          @map("billing_rate") @db.Decimal(12, 2)
+  currency           String           @default("USD")
+  billingCycle       BillingCycle     @default(MONTHLY) @map("billing_cycle")
+  workSchedule       WorkSchedule     @default(FULL_TIME) @map("work_schedule")
+  status             AssignmentStatus @default(ACTIVE)
+  notes              String?
+  createdAt          DateTime         @default(now()) @map("created_at")
+  updatedAt          DateTime         @updatedAt @map("updated_at")
+  createdBy          String?          @map("created_by")
+  updatedBy          String?          @map("updated_by")
+  accruedLeaveMonths Int              @default(0) @map("accrued_leave_months")
+
+  tenant          Tenant            @relation(fields: [tenantId], references: [id])
+  employee        Employee          @relation(fields: [employeeId], references: [id])
+  client          Client            @relation(fields: [clientId], references: [id])
+  lineItems       InvoiceLineItem[]
+  GeneratedLetter GeneratedLetter[]
+
+  @@index([tenantId])
+  @@index([tenantId, employeeId])
+  @@index([tenantId, clientId])
+  @@index([tenantId, status])
+  @@map("employee_assignments")
+}
+
+// ============================================================
+// INVOICE MODELS — Invoice + Line Items
+// ============================================================
+
+model Invoice {
+  id            String        @id @default(cuid())
+  tenantId      String        @map("tenant_id")
+  clientId      String        @map("client_id")
+  invoiceNumber String        @map("invoice_number") // e.g. INV-2026-0001
+  invoiceDate   DateTime      @map("invoice_date") @db.Date
+  dueDate       DateTime      @map("due_date") @db.Date
+  periodStart   DateTime      @map("period_start") @db.Date
+  periodEnd     DateTime      @map("period_end") @db.Date
+  subtotal      Decimal       @db.Decimal(14, 2)
+  taxPercent    Decimal       @default(0) @map("tax_percent") @db.Decimal(5, 2)
+  taxAmount     Decimal       @default(0) @map("tax_amount") @db.Decimal(14, 2)
+  total         Decimal       @db.Decimal(14, 2)
+  currency      String        @default("USD")
+  status        InvoiceStatus @default(DRAFT)
+  notes         String?
+  paymentTerms  String?       @map("payment_terms") // e.g. "Net 30"
+  payoneerLink  String?       @map("payoneer_link") // per-invoice Payoneer payment URL (shown in email)
+  paidAt        DateTime?     @map("paid_at")
+  paidAmount    Decimal?      @map("paid_amount") @db.Decimal(14, 2)
+  paymentRef    String?       @map("payment_ref") // Payoneer transaction ID
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+  createdBy     String?       @map("created_by")
+  updatedBy     String?       @map("updated_by")
+
+  // Which legal entity issues this invoice (null = tenant default entity)
+  billingEntityId String? @map("billing_entity_id")
+
+  tenant        Tenant            @relation(fields: [tenantId], references: [id])
+  client        Client            @relation(fields: [clientId], references: [id])
+  billingEntity BillingEntity?    @relation(fields: [billingEntityId], references: [id], onDelete: SetNull)
+  lineItems     InvoiceLineItem[]
+
+  amountWrittenOff Decimal?         @default(0) @map("amount_written_off") @db.Decimal(14, 2)
+  writeOffReason   String?          @map("write_off_reason")
+  sentAt           DateTime?        @map("sent_at")
+  sentTo           String?          @map("sent_to")
+  payments         InvoicePayment[]
+
+  @@unique([tenantId, invoiceNumber])
+  @@index([tenantId])
+  @@index([tenantId, clientId])
+  @@index([tenantId, status])
+  @@index([tenantId, dueDate])
+  @@index([billingEntityId])
+  @@map("invoices")
+}
+
+// A legal entity that issues invoices (e.g. "LegelpTech Outsourcing Pvt Ltd"
+// vs "Legelp Services LLP"). Each has its own name, address, payment
+// instructions and invoice-number series (invoicePrefix).
+model BillingEntity {
+  id                  String   @id @default(cuid())
+  tenantId            String   @map("tenant_id")
+  name                String
+  registeredAddress   String?  @map("registered_address")
+  taxLine             String?  @map("tax_line") // optional free-text tax id line
+  paymentInstructions String?  @map("payment_instructions")
+  invoicePrefix       String   @map("invoice_prefix") // e.g. "LEGELP/ZT"; series = {prefix}/{FY}/{seq}
+  isDefault           Boolean  @default(false) @map("is_default")
+  isActive            Boolean  @default(true) @map("is_active")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  tenant   Tenant    @relation(fields: [tenantId], references: [id])
+  invoices Invoice[]
+  clients  Client[]
+
+  @@unique([tenantId, name])
+  @@index([tenantId])
+  @@map("billing_entities")
+}
+
+model InvoiceLineItem {
+  id           String   @id @default(cuid())
+  invoiceId    String   @map("invoice_id")
+  assignmentId String?  @map("assignment_id") // links to the assignment
+  description  String // e.g. "Ravi Kumar — Senior Backend Engineer (Apr 2026)"
+  quantity     Decimal  @db.Decimal(10, 2) // hours or 1 for monthly
+  rate         Decimal  @db.Decimal(12, 2) // billing rate
+  amount       Decimal  @db.Decimal(14, 2) // quantity * rate
+  sortOrder    Int      @default(0) @map("sort_order")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  invoice    Invoice             @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  assignment EmployeeAssignment? @relation(fields: [assignmentId], references: [id])
+
+  @@index([invoiceId])
+  @@map("invoice_line_items")
+}
+
+// ============================================================
+// REMOTE MONITORING — Time Logs + Activity Snapshots
+// ============================================================
+
+model TimeLog {
+  id         String        @id @default(cuid())
+  tenantId   String        @map("tenant_id")
+  employeeId String        @map("employee_id")
+  date       DateTime      @db.Date
+  clockIn    DateTime      @map("clock_in")
+  clockOut   DateTime?     @map("clock_out")
+  duration   Int? // total seconds worked
+  source     TimeLogSource @default(MANUAL)
+  notes      String?
+  createdAt  DateTime      @default(now()) @map("created_at")
+  updatedAt  DateTime      @updatedAt @map("updated_at")
+
+  tenant   Tenant   @relation(fields: [tenantId], references: [id])
+  employee Employee @relation(fields: [employeeId], references: [id])
+
+  @@index([tenantId, date])
+  @@index([tenantId, employeeId])
+  @@index([tenantId, employeeId, date])
+  @@map("time_logs")
+}
+
+model ActivitySnapshot {
+  id              String   @id @default(cuid())
+  tenantId        String   @map("tenant_id")
+  employeeId      String   @map("employee_id")
+  capturedAt      DateTime @map("captured_at")
+  screenshotUrl   String?  @map("screenshot_url") // S3/R2 URL (or local path for now)
+  thumbnailUrl    String?  @map("thumbnail_url")
+  activityPercent Int      @default(0) @map("activity_percent") // 0-100
+  keystrokes      Int      @default(0)
+  mouseClicks     Int      @default(0)
+  mouseMovements  Int      @default(0) @map("mouse_movements")
+  activeApp       String?  @map("active_app") // e.g. "VS Code"
+  activeUrl       String?  @map("active_url") // browser URL if applicable
+  activeTitle     String?  @map("active_title") // window title
+  isIdle          Boolean  @default(false) @map("is_idle")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  tenant   Tenant   @relation(fields: [tenantId], references: [id])
+  employee Employee @relation(fields: [employeeId], references: [id])
+
+  @@index([tenantId, employeeId, capturedAt])
+  @@index([tenantId, capturedAt])
+  @@map("activity_snapshots")
+}
+
+// ============================================================
+// LEAVE MANAGEMENT — Types, Balances, Requests
+// ============================================================
+
+model LeaveType {
+  id           String   @id @default(cuid())
+  tenantId     String   @map("tenant_id")
+  name         String // e.g. "Casual Leave", "Sick Leave", "Earned Leave"
+  code         String // e.g. "CL", "SL", "EL"
+  isPaid       Boolean  @default(true) @map("is_paid")
+  defaultDays  Int      @default(12) @map("default_days") // annual quota
+  carryForward Boolean  @default(false) @map("carry_forward")
+  maxCarryDays Int      @default(0) @map("max_carry_days")
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  tenant   Tenant         @relation(fields: [tenantId], references: [id])
+  balances LeaveBalance[]
+  requests LeaveRequest[]
+
+  @@unique([tenantId, code])
+  @@index([tenantId])
+  @@map("leave_types")
+}
+
+model LeaveBalance {
+  id          String   @id @default(cuid())
+  tenantId    String   @map("tenant_id")
+  employeeId  String   @map("employee_id")
+  leaveTypeId String   @map("leave_type_id")
+  year        Int // e.g. 2026
+  entitled    Decimal  @default(0) @db.Decimal(6, 2) // total days entitled
+  used        Decimal  @default(0) @db.Decimal(6, 2) // days used
+  carriedOver Decimal  @default(0) @map("carried_over") @db.Decimal(6, 2)
+  adjustment  Decimal  @default(0) @db.Decimal(6, 2) // manual adjustments (+/-)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  tenant    Tenant    @relation(fields: [tenantId], references: [id])
+  employee  Employee  @relation(fields: [employeeId], references: [id])
+  leaveType LeaveType @relation(fields: [leaveTypeId], references: [id])
+
+  @@unique([tenantId, employeeId, leaveTypeId, year])
+  @@index([tenantId, employeeId])
+  @@index([tenantId, year])
+  @@map("leave_balances")
+}
+
+model LeaveRequest {
+  id          String      @id @default(cuid())
+  tenantId    String      @map("tenant_id")
+  employeeId  String      @map("employee_id")
+  leaveTypeId String      @map("leave_type_id")
+  startDate   DateTime    @map("start_date") @db.Date
+  endDate     DateTime    @map("end_date") @db.Date
+  days        Decimal     @db.Decimal(4, 1) // supports half-days: 0.5, 1.0, 2.5 etc.
+  reason      String?
+  status      LeaveStatus @default(PENDING)
+  reviewedBy  String?     @map("reviewed_by") // userId who approved/rejected
+  reviewedAt  DateTime?   @map("reviewed_at")
+  reviewNote  String?     @map("review_note")
+  cancelledAt DateTime?   @map("cancelled_at")
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+
+  tenant    Tenant    @relation(fields: [tenantId], references: [id])
+  employee  Employee  @relation(fields: [employeeId], references: [id])
+  leaveType LeaveType @relation(fields: [leaveTypeId], references: [id])
+
+  @@index([tenantId, employeeId])
+  @@index([tenantId, status])
+  @@index([tenantId, startDate])
+  @@map("leave_requests")
+}
+
+// ============================================================
+// PAYROLL — Salary Structures, Payroll Runs, Payslips
+// ============================================================
+
+model SalaryStructure {
+  id            String    @id @default(cuid())
+  tenantId      String    @map("tenant_id")
+  employeeId    String    @map("employee_id")
+  effectiveFrom DateTime  @map("effective_from") @db.Date
+  effectiveTo   DateTime? @map("effective_to") @db.Date
+
+  // Earnings
+  basic        Decimal @db.Decimal(12, 2) // Basic salary
+  hra          Decimal @default(0) @db.Decimal(12, 2) // House Rent Allowance
+  da           Decimal @default(0) @db.Decimal(12, 2) // Dearness Allowance
+  specialAllow Decimal @default(0) @map("special_allow") @db.Decimal(12, 2)
+  otherAllow   Decimal @default(0) @map("other_allow") @db.Decimal(12, 2)
+  grossSalary  Decimal @map("gross_salary") @db.Decimal(12, 2)
+
+  // Deductions (employer/employee contributions)
+  pfEmployee  Decimal @default(0) @map("pf_employee") @db.Decimal(12, 2) // 12% of basic
+  pfEmployer  Decimal @default(0) @map("pf_employer") @db.Decimal(12, 2) // 12% of basic
+  esiEmployee Decimal @default(0) @map("esi_employee") @db.Decimal(12, 2) // 0.75% of gross
+  esiEmployer Decimal @default(0) @map("esi_employer") @db.Decimal(12, 2) // 3.25% of gross
+  profTax     Decimal @default(0) @map("prof_tax") @db.Decimal(12, 2) // Professional Tax (state)
+  tds         Decimal @default(0) @db.Decimal(12, 2) // Monthly TDS estimate
+
+  netSalary Decimal @map("net_salary") @db.Decimal(12, 2)
+  ctc       Decimal @db.Decimal(12, 2) // Annual CTC
+
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  tenant   Tenant   @relation(fields: [tenantId], references: [id])
+  employee Employee @relation(fields: [employeeId], references: [id])
+
+  @@index([tenantId, employeeId])
+  @@index([tenantId, isActive])
+  @@map("salary_structures")
+}
+
+model PayrollRun {
+  id                  String        @id @default(cuid())
+  tenantId            String        @map("tenant_id")
+  month               Int // 1-12
+  year                Int
+  runDate             DateTime      @map("run_date")
+  status              PayrollStatus @default(DRAFT)
+  totalGross          Decimal       @default(0) @map("total_gross") @db.Decimal(14, 2)
+  totalDeductions     Decimal       @default(0) @map("total_deductions") @db.Decimal(14, 2)
+  totalNet            Decimal       @default(0) @map("total_net") @db.Decimal(14, 2)
+  employeeCount       Int           @default(0) @map("employee_count")
+  processedBy         String?       @map("processed_by")
+  approvedBy          String?       @map("approved_by")
+  approvedAt          DateTime?     @map("approved_at")
+  frozenAt            DateTime?     @map("frozen_at")
+  frozenBy            String?       @map("frozen_by")
+  finalizedAt         DateTime?     @map("finalized_at")
+  finalizedBy         String?       @map("finalized_by")
+  bankFileUrl         String?       @map("bank_file_url")
+  bankFileGeneratedAt DateTime?     @map("bank_file_generated_at")
+  notes               String?
+  createdAt           DateTime      @default(now()) @map("created_at")
+  updatedAt           DateTime      @updatedAt @map("updated_at")
+
+  tenant   Tenant    @relation(fields: [tenantId], references: [id])
+  payslips Payslip[]
+
+  @@unique([tenantId, month, year])
+  @@index([tenantId])
+  @@map("payroll_runs")
+}
+
+model Payslip {
+  id           String @id @default(cuid())
+  tenantId     String @map("tenant_id")
+  payrollRunId String @map("payroll_run_id")
+  employeeId   String @map("employee_id")
+  month        Int
+  year         Int
+
+  // Earnings
+  basic         Decimal @db.Decimal(12, 2)
+  hra           Decimal @default(0) @db.Decimal(12, 2)
+  da            Decimal @default(0) @db.Decimal(12, 2)
+  specialAllow  Decimal @default(0) @map("special_allow") @db.Decimal(12, 2)
+  otherAllow    Decimal @default(0) @map("other_allow") @db.Decimal(12, 2)
+  grossEarnings Decimal @map("gross_earnings") @db.Decimal(12, 2)
+
+  // Deductions
+  pfEmployee      Decimal @default(0) @map("pf_employee") @db.Decimal(12, 2)
+  esiEmployee     Decimal @default(0) @map("esi_employee") @db.Decimal(12, 2)
+  profTax         Decimal @default(0) @map("prof_tax") @db.Decimal(12, 2)
+  tds             Decimal @default(0) @db.Decimal(12, 2)
+  otherDeductions Decimal @default(0) @map("other_deductions") @db.Decimal(12, 2)
+  totalDeductions Decimal @map("total_deductions") @db.Decimal(12, 2)
+
+  // Net
+  netPay Decimal @map("net_pay") @db.Decimal(12, 2)
+
+  // Ad-hoc per-payslip head adjustments (NOT pay structure): [{type:EARNING|DEDUCTION,label,amount}]
+  adjustments Json @default("[]")
+
+  // TDS computation breakdown snapshot (JSON)
+  tdsBreakdown Json? @map("tds_breakdown")
+
+  // LOP (Loss of Pay)
+  workingDays Int @default(0) @map("working_days")
+  paidDays    Int @default(0) @map("paid_days")
+  lopDays     Int @default(0) @map("lop_days")
+
+  paidAt     DateTime? @map("paid_at")
+  paymentRef String?   @map("payment_ref")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+
+  tenant     Tenant        @relation(fields: [tenantId], references: [id])
+  payrollRun PayrollRun    @relation(fields: [payrollRunId], references: [id])
+  employee   Employee      @relation(fields: [employeeId], references: [id])
+  lines      PayslipLine[]
+
+  @@unique([tenantId, employeeId, month, year])
+  @@index([tenantId, payrollRunId])
+  @@index([tenantId, employeeId])
+  @@map("payslips")
+}
+
+// ============================================================
+// ATTENDANCE MODEL
+// ============================================================
+
+model Attendance {
+  id         String           @id @default(cuid())
+  tenantId   String           @map("tenant_id")
+  employeeId String           @map("employee_id")
+  date       DateTime         @db.Date
+  status     AttendanceStatus @default(PRESENT)
+  checkIn    DateTime?        @map("check_in")
+  checkOut   DateTime?        @map("check_out")
+  workHours  Decimal?         @map("work_hours") @db.Decimal(5, 2)
+  notes      String?
+  markedBy   String?          @map("marked_by")
+  source     AttendanceSource @default(MANUAL)
+  createdAt  DateTime         @default(now()) @map("created_at")
+  updatedAt  DateTime         @updatedAt @map("updated_at")
+
+  tenant   Tenant   @relation(fields: [tenantId], references: [id])
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, employeeId, date])
+  @@index([tenantId, date])
+  @@index([tenantId, employeeId])
+  @@index([tenantId, status])
+  @@map("attendance")
+}
+
+// ============================================================
+// DOCUMENT MANAGEMENT
+// ============================================================
+
+model DocumentCategory {
+  id         String   @id @default(cuid())
+  tenantId   String   @map("tenant_id")
+  name       String // e.g. "ID Proof", "Address Proof", "Offer Letter"
+  code       String // e.g. "ID", "ADDR", "OFFER"
+  isRequired Boolean  @default(false) @map("is_required")
+  isActive   Boolean  @default(true) @map("is_active")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  tenant    Tenant             @relation(fields: [tenantId], references: [id])
+  documents EmployeeDocument[]
+
+  @@unique([tenantId, code])
+  @@index([tenantId])
+  @@map("document_categories")
+}
+
+model EmployeeDocument {
+  id         String    @id @default(cuid())
+  tenantId   String    @map("tenant_id")
+  employeeId String    @map("employee_id")
+  categoryId String    @map("category_id")
+  fileName   String    @map("file_name")
+  fileUrl    String    @map("file_url") // MinIO/S3 URL
+  fileSize   Int       @default(0) @map("file_size") // bytes
+  mimeType   String?   @map("mime_type")
+  expiryDate DateTime? @map("expiry_date") @db.Date
+  notes      String?
+  uploadedBy String?   @map("uploaded_by")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+  deletedAt  DateTime? @map("deleted_at")
+
+  tenant   Tenant           @relation(fields: [tenantId], references: [id])
+  employee Employee         @relation(fields: [employeeId], references: [id])
+  category DocumentCategory @relation(fields: [categoryId], references: [id])
+
+  @@index([tenantId, employeeId])
+  @@index([tenantId, categoryId])
+  @@map("employee_documents")
+}
+
+// ============================================================
+// HOLIDAY CALENDAR & SHIFTS
+// ============================================================
+
+model Holiday {
+  id         String   @id @default(cuid())
+  tenantId   String   @map("tenant_id")
+  name       String
+  date       DateTime @db.Date
+  isOptional Boolean  @default(false) @map("is_optional")
+  year       Int
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@unique([tenantId, date])
+  @@index([tenantId, year])
+  @@map("holidays")
+}
+
+model ShiftType {
+  id                String   @id @default(cuid())
+  tenantId          String   @map("tenant_id")
+  name              String // e.g. "Day Shift", "Night Shift", "US Shift"
+  code              String
+  startTime         String   @map("start_time") // "09:00"
+  endTime           String   @map("end_time") // "18:00"
+  graceMinutes      Int      @default(15) @map("grace_minutes")
+  isDefault         Boolean  @default(false) @map("is_default")
+  isActive          Boolean  @default(true) @map("is_active")
+  description       String?
+  lunchBreakMinutes Int      @default(60) @map("lunch_break_minutes")
+  totalHours        Decimal  @default(9) @map("total_hours") @db.Decimal(4, 2)
+  workingHours      Decimal  @default(8) @map("working_hours") @db.Decimal(4, 2)
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  tenant      Tenant          @relation(fields: [tenantId], references: [id])
+  assignments EmployeeShift[]
+
+  @@unique([tenantId, code])
+  @@index([tenantId])
+  @@map("shift_types")
+}
+
+model EmployeeShift {
+  id            String    @id @default(cuid())
+  tenantId      String    @map("tenant_id")
+  employeeId    String    @map("employee_id")
+  shiftTypeId   String    @map("shift_type_id")
+  effectiveFrom DateTime  @map("effective_from") @db.Date
+  effectiveTo   DateTime? @map("effective_to") @db.Date
+  isActive      Boolean   @default(true) @map("is_active")
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  tenant    Tenant    @relation(fields: [tenantId], references: [id])
+  employee  Employee  @relation(fields: [employeeId], references: [id])
+  shiftType ShiftType @relation(fields: [shiftTypeId], references: [id])
+
+  @@index([tenantId, employeeId])
+  @@map("employee_shifts")
+}
+
+// ============================================================
+// AUDIT LOG
+// ============================================================
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  tenantId  String   @map("tenant_id")
+  userId    String?  @map("user_id")
+  action    String // CREATE, UPDATE, DELETE, LOGIN, EXPORT, IMPORT
+  entity    String // Employee, Invoice, LeaveRequest, etc.
+  entityId  String?  @map("entity_id")
+  changes   Json? // { field: { old: x, new: y } }
+  ipAddress String?  @map("ip_address")
+  userAgent String?  @map("user_agent")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId, createdAt])
+  @@index([tenantId, entity])
+  @@index([tenantId, userId])
+  @@map("audit_logs")
+}
+
+model AttendanceImportBatch {
+  id           String            @id @default(cuid())
+  tenantId     String            @map("tenant_id")
+  uploadedBy   String            @map("uploaded_by")
+  fileName     String            @map("file_name")
+  fileSize     Int               @map("file_size")
+  rowCount     Int               @default(0) @map("row_count")
+  successCount Int               @default(0) @map("success_count")
+  errorCount   Int               @default(0) @map("error_count")
+  status       ImportBatchStatus @default(PENDING)
+  errors       Json?
+  dryRun       Boolean           @default(true) @map("dry_run")
+  committedAt  DateTime?         @map("committed_at")
+  createdAt    DateTime          @default(now()) @map("created_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId, createdAt])
+  @@index([tenantId, status])
+  @@map("attendance_import_batches")
+}
+
+enum ImportBatchStatus {
+  PENDING
+  COMMITTED
+  FAILED
+  CANCELLED
+}
+
+// ============================================================
+// NOTIFICATIONS
+// ============================================================
+
+model Notification {
+  id        String           @id @default(cuid())
+  tenantId  String           @map("tenant_id")
+  userId    String           @map("user_id") // recipient
+  type      NotificationType
+  title     String
+  message   String
+  linkUrl   String?          @map("link_url") // deep link e.g. "/leaves/abc123"
+  isRead    Boolean          @default(false) @map("is_read")
+  readAt    DateTime?        @map("read_at")
+  metadata  Json? // extra data (e.g. leaveRequestId, invoiceId)
+  createdAt DateTime         @default(now()) @map("created_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@index([tenantId, userId, isRead])
+  @@index([tenantId, userId, createdAt])
+  @@index([tenantId, type])
+  @@map("notifications")
+}
+
+// ============================================================
+// APPRAISAL — annual salary-review cycle keyed to join anniversary.
+// Flows: DUE → SELF_REVIEW → MANAGER_REVIEW → PENDING_APPROVAL → APPROVED → APPLIED.
+// On APPLIED it creates a versioned PayStructureAssignment (new CTC) and, if the
+// effective date is backdated, computes arrears carried into a payroll run.
+// ============================================================
+model AppraisalCycle {
+  id          String          @id @default(cuid())
+  tenantId    String          @map("tenant_id")
+  employeeId  String          @map("employee_id")
+  cycleYear   Int             @map("cycle_year") // calendar year of the anniversary (one cycle/employee/year)
+  cycleNumber Int             @map("cycle_number") // completed years of service at this anniversary
+  dueDate     DateTime        @map("due_date") @db.Date // the join-date anniversary
+  status      AppraisalStatus @default(DUE)
+
+  // Comp snapshot when the cycle opened (from the active PayStructureAssignment)
+  currentCtcAnnual  Decimal? @map("current_ctc_annual") @db.Decimal(14, 2)
+  currentCtcMonthly Decimal? @map("current_ctc_monthly") @db.Decimal(12, 2)
+
+  // Employee self-review
+  selfRating      Int?      @map("self_rating") // 1-5
+  selfComments    String?   @map("self_comments")
+  selfSubmittedAt DateTime? @map("self_submitted_at")
+
+  // Manager review
+  managerId            String?   @map("manager_id") // reviewing user
+  managerRating        Int?      @map("manager_rating") // 1-5
+  managerComments      String?   @map("manager_comments")
+  recommendedHikePct   Decimal?  @map("recommended_hike_pct") @db.Decimal(6, 2)
+  recommendedCtcAnnual Decimal?  @map("recommended_ctc_annual") @db.Decimal(14, 2)
+  managerSubmittedAt   DateTime? @map("manager_submitted_at")
+
+  // Admin final decision
+  newCtcAnnual   Decimal?  @map("new_ctc_annual") @db.Decimal(14, 2)
+  newCtcMonthly  Decimal?  @map("new_ctc_monthly") @db.Decimal(12, 2)
+  hikePct        Decimal?  @map("hike_pct") @db.Decimal(6, 2)
+  effectiveFrom  DateTime? @map("effective_from") @db.Date
+  adminComments  String?   @map("admin_comments")
+  approvedBy     String?   @map("approved_by")
+  approvedAt     DateTime? @map("approved_at")
+  rejectedReason String?   @map("rejected_reason")
+
+  // Apply — the resulting salary revision
+  appliedAssignmentId String?   @map("applied_assignment_id")
+  appliedAt           DateTime? @map("applied_at")
+
+  // Arrears (back-pay for already-paid months since effectiveFrom)
+  arrearAmount       Decimal?  @map("arrear_amount") @db.Decimal(14, 2)
+  arrearBreakdown    Json?     @map("arrear_breakdown") // [{month,year,oldMonthly,newMonthly,paidDays,amount}]
+  arrearPayrollRunId String?   @map("arrear_payroll_run_id")
+  arrearAppliedAt    DateTime? @map("arrear_applied_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  tenant   Tenant   @relation(fields: [tenantId], references: [id])
+  employee Employee @relation(fields: [employeeId], references: [id])
+
+  @@unique([tenantId, employeeId, cycleYear])
+  @@index([tenantId, status])
+  @@index([tenantId, employeeId])
+  @@map("appraisal_cycles")
+}
+
+// Per-tenant appraisal config (the anniversary trigger cadence).
+model AppraisalSettings {
+  id             String   @id @default(cuid())
+  tenantId       String   @unique @map("tenant_id")
+  enabled        Boolean   @default(true) // master switch for the trigger
+  autoCreate     Boolean   @default(true) @map("auto_create") // cron opens cycles automatically
+  intervalMonths Int       @default(12) @map("interval_months") // months between cycles
+  leadDays       Int       @default(0) @map("lead_days") // open a cycle N days before the anniversary
+  // Go-live anchor: only open cycles for anniversaries ON/AFTER this date
+  // (older anniversaries were handled before the module existed). null = no cutoff.
+  startFrom      DateTime? @map("start_from") @db.Date
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@map("appraisal_settings")
+}
+
+// 1:1 audio/video call record (LiveKit). Caller/callee keyed by User.id.
+// Room convention: hrms-dm-<minUserId>-<maxUserId> (deterministic per pair).
+model Call {
+  id        String     @id @default(cuid())
+  tenantId  String     @map("tenant_id")
+  room      String // LiveKit room name
+  callerId  String     @map("caller_id")
+  calleeId  String     @map("callee_id")
+  media     CallMedia
+  status    CallStatus @default(RINGING)
+  startedAt DateTime?  @map("started_at") // when both joined / call connected
+  endedAt   DateTime?  @map("ended_at")
+  createdAt DateTime   @default(now()) @map("created_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId])
+  @@index([tenantId, callerId])
+  @@index([tenantId, calleeId])
+  @@index([tenantId, createdAt])
+  @@map("calls")
+}
+
+enum CallMedia {
+  AUDIO
+  VIDEO
+}
+
+enum CallStatus {
+  RINGING
+  ACCEPTED
+  REJECTED
+  CANCELLED
+  MISSED
+  ENDED
+}
+
+// Direct message — either 1:1 (pairKey + recipientId set, groupId null) or a
+// group message (groupId set, recipientId/pairKey null). pairKey =
+// min-max(userId) deterministic per pair (same convention as call rooms).
+model Message {
+  id          String    @id @default(cuid())
+  tenantId    String    @map("tenant_id")
+  pairKey     String?   @map("pair_key")
+  senderId    String    @map("sender_id")
+  recipientId String?   @map("recipient_id")
+  groupId     String?   @map("group_id")
+  body        String
+  readAt      DateTime? @map("read_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  group  Group? @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, pairKey, createdAt])
+  @@index([tenantId, recipientId, readAt])
+  @@index([tenantId, groupId, createdAt])
+  @@map("messages")
+}
+
+// A named group for multi-party chat + calls (created by ADMIN/MANAGER).
+// Capacity is enforced in the service (creator + up to 4 members = 5 max).
+model Group {
+  id          String   @id @default(cuid())
+  tenantId    String   @map("tenant_id")
+  name        String
+  createdById String   @map("created_by_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  tenant   Tenant        @relation(fields: [tenantId], references: [id])
+  members  GroupMember[]
+  messages Message[]
+
+  @@index([tenantId])
+  @@map("groups")
+}
+
+model GroupMember {
+  id         String    @id @default(cuid())
+  groupId    String    @map("group_id")
+  userId     String    @map("user_id")
+  lastReadAt DateTime? @map("last_read_at")
+  addedAt    DateTime  @default(now()) @map("added_at")
+
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, userId])
+  @@index([userId])
+  @@map("group_members")
+}
+
+// One browser/device that opted into Web Push notifications (calls +
+// messages). userId is the Better Auth user id, same as GroupMember.userId.
+// The push endpoint URL is globally unique per browser subscription.
+model PushSubscription {
+  id        String   @id @default(cuid())
+  tenantId  String   @map("tenant_id")
+  userId    String   @map("user_id")
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  userAgent String?  @map("user_agent")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@index([tenantId])
+  @@map("push_subscriptions")
+}
+
+// Grants a user (by login email) access to a SHARED @legelp.com mailbox in the
+// portal inbox switcher (beyond their own mailbox). Sensitive boxes stay off
+// unless explicitly granted here.
+model MailboxAccess {
+  id             String   @id @default(cuid())
+  tenantId       String   @map("tenant_id")
+  userEmail      String   @map("user_email")
+  mailboxAddress String   @map("mailbox_address")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@unique([tenantId, userEmail, mailboxAddress])
+  @@index([tenantId, userEmail])
+  @@map("mailbox_access")
+}
+
+// ============================================================
+// CONFIGURABLE PAY STRUCTURES — Formula-based Payroll Engine
+// ============================================================
+
+// Individual pay component definition (e.g., "Basic+DA", "HRA", "PF")
+model PayHead {
+  id          String          @id @default(cuid())
+  tenantId    String          @map("tenant_id")
+  name        String // Display name: "Basic and DA"
+  code        String // Short code: "BASIC_DA"
+  type        PayHeadType // EARNING or DEDUCTION
+  category    PayHeadCategory @default(FIXED) // FIXED, VARIABLE, STATUTORY
+  description String?
+
+  // Statutory flags
+  isStatutory   Boolean        @default(false) @map("is_statutory")
+  statutoryType StatutoryType? @map("statutory_type") // PF, ESI, PT, GRATUITY, TDS
+
+  // Display
+  sortOrder Int      @default(0) @map("sort_order")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  tenant       Tenant                  @relation(fields: [tenantId], references: [id])
+  components   PayStructureComponent[]
+  payslipLines PayslipLine[]
+
+  @@unique([tenantId, code])
+  @@index([tenantId, type])
+  @@map("pay_heads")
+}
+
+// Named pay structure template (e.g., "Standard CTC", "5 Days Working")
+model PayStructureTemplate {
+  id            String    @id @default(cuid())
+  tenantId      String    @map("tenant_id")
+  name          String // "Standard CTC 50:25:25"
+  description   String?
+  effectiveFrom DateTime? @map("effective_from") @db.Date
+  isDefault     Boolean   @default(false) @map("is_default")
+  isActive      Boolean   @default(true) @map("is_active")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  tenant      Tenant                   @relation(fields: [tenantId], references: [id])
+  components  PayStructureComponent[]
+  assignments PayStructureAssignment[]
+
+  @@unique([tenantId, name])
+  @@index([tenantId])
+  @@map("pay_structure_templates")
+}
+
+// Links a PayHead to a PayStructureTemplate with formula + flags
+model PayStructureComponent {
+  id         String @id @default(cuid())
+  templateId String @map("template_id")
+  headId     String @map("head_id")
+
+  // Formula (e.g., "MIN((BASIC_DA % 50), ((MGROSS / TDC * PDC) - BASIC_DA))")
+  formula        String? // null = manual entry
+  formulaDisplay String? @map("formula_display") // Human-readable version
+
+  // Flags (matching the screenshot Y/N columns)
+  isVariable    Boolean @default(false) @map("is_variable") // Manual input each month
+  showOnPayslip Boolean @default(true) @map("show_on_payslip")
+  hasArrear     Boolean @default(false) @map("has_arrear")
+  hasIncrPct    Boolean @default(false) @map("has_incr_pct") // Increment percentage
+
+  // Statutory computation flags
+  affectsPf       Boolean @default(false) @map("affects_pf")
+  affectsEsi      Boolean @default(false) @map("affects_esi")
+  affectsPt       Boolean @default(false) @map("affects_pt")
+  affectsGratuity Boolean @default(false) @map("affects_gratuity")
+
+  // Rounding
+  roundingMode      RoundingMode @default(NORMAL) @map("rounding_mode")
+  roundingPrecision Int          @default(0) @map("rounding_precision") // decimal places
+
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  template PayStructureTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  head     PayHead              @relation(fields: [headId], references: [id])
+
+  @@unique([templateId, headId])
+  @@index([templateId])
+  @@map("pay_structure_components")
+}
+
+// Assigns a pay structure template to an employee
+model PayStructureAssignment {
+  id            String    @id @default(cuid())
+  tenantId      String    @map("tenant_id")
+  employeeId    String    @map("employee_id")
+  templateId    String    @map("template_id")
+  ctcAnnual     Decimal?  @map("ctc_annual") @db.Decimal(14, 2) // Annual CTC
+  ctcMonthly    Decimal?  @map("ctc_monthly") @db.Decimal(12, 2) // Monthly gross (MGross)
+  effectiveFrom DateTime  @map("effective_from") @db.Date
+  effectiveTo   DateTime? @map("effective_to") @db.Date
+  isActive      Boolean   @default(true) @map("is_active")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  tenant   Tenant               @relation(fields: [tenantId], references: [id])
+  employee Employee             @relation(fields: [employeeId], references: [id])
+  template PayStructureTemplate @relation(fields: [templateId], references: [id])
+
+  @@index([tenantId, employeeId])
+  @@index([tenantId, isActive])
+  @@map("pay_structure_assignments")
+}
+
+// Individual calculated line item on a payslip
+model PayslipLine {
+  id        String      @id @default(cuid())
+  payslipId String      @map("payslip_id")
+  headId    String      @map("head_id")
+  headName  String      @map("head_name") // Snapshot at time of calculation
+  headType  PayHeadType @map("head_type") // EARNING or DEDUCTION
+
+  rate         Decimal @default(0) @db.Decimal(12, 2) // Base rate
+  amount       Decimal @db.Decimal(12, 2) // Calculated amount
+  arrearAmount Decimal @default(0) @map("arrear_amount") @db.Decimal(12, 2)
+  totalAmount  Decimal @map("total_amount") @db.Decimal(12, 2) // amount + arrear
+
+  formula       String? // Formula used (for audit trail)
+  sortOrder     Int      @default(0) @map("sort_order")
+  showOnPayslip Boolean  @default(true) @map("show_on_payslip")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  payslip Payslip @relation(fields: [payslipId], references: [id], onDelete: Cascade)
+  head    PayHead @relation(fields: [headId], references: [id])
+
+  @@index([payslipId])
+  @@map("payslip_lines")
+}
+
+// ============================================================
+// ENUMS
+// ============================================================
+
+enum PayHeadType {
+  EARNING
+  DEDUCTION
+}
+
+enum PayHeadCategory {
+  FIXED // Calculated from formula every month
+  VARIABLE // Manually entered each month (Incentive, Bonus)
+  STATUTORY // Auto-calculated (PF, ESI, PT)
+}
+
+enum StatutoryType {
+  PF // Provident Fund (12% of Basic, ceiling 15000)
+  ESI // Employee State Insurance (0.75% employee, 3.25% employer)
+  PT // Professional Tax (state-based slab)
+  GRATUITY // Gratuity (4.81% of Basic)
+  TDS // Tax Deducted at Source
+}
+
+enum RoundingMode {
+  NORMAL // Standard rounding
+  FLOOR // Round down
+  CEILING // Round up
+  NONE // No rounding
+}
+
+enum Plan {
+  STARTER
+  PROFESSIONAL
+  ENTERPRISE
+}
+
+enum UserRole {
+  OWNER
+  ADMIN
+  MANAGER
+  MEMBER
+  VIEWER
+}
+
+enum EmployeeApprovalStatus {
+  PENDING_INVITE
+  INVITED
+  SUBMITTED
+  APPROVED
+  REJECTED
+
+  @@map("EmployeeApprovalStatus")
+}
+
+enum ItDeclarationStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  REJECTED
+}
+
+enum TaxRegime {
+  NEW
+  OLD
+}
+
+enum EngagementType {
+  EMPLOYEE
+  CONSULTANT
+}
+
+enum EmployeeStatus {
+  ACTIVE
+  INACTIVE
+  TERMINATED
+  ON_NOTICE
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  HALF_DAY
+  LEAVE
+  HOLIDAY
+  WEEKEND
+  WFH
+}
+
+enum AttendanceSource {
+  MANUAL
+  SELF_CHECKIN
+  BIOMETRIC
+  SYSTEM
+  CSV // CSV-imported, wins over AGENT
+  AGENT // Rolled up from desktop agent
+}
+
+enum AssignmentStatus {
+  ACTIVE
+  COMPLETED
+  CANCELLED
+  ON_HOLD
+}
+
+enum BillingCycle {
+  MONTHLY
+  WEEKLY
+  HOURLY
+  FIXED
+}
+
+enum WorkSchedule {
+  FULL_TIME
+  PART_TIME
+}
+
+enum TimeLogSource {
+  MANUAL
+  DESKTOP_AGENT
+  BROWSER_EXTENSION
+  API
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PAID
+  OVERDUE
+  CANCELLED
+  VOID
+  PARTIALLY_PAID
+}
+
+enum LeaveStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+enum PayrollStatus {
+  DRAFT
+  PROCESSING
+  COMPLETED
+  APPROVED
+  PAID
+  CONSOLIDATED
+  RECTIFIED
+  COMPUTED
+  REVIEWED
+  FROZEN
+  BANK_GENERATED
+  FINALIZED
+}
+
+enum NotificationType {
+  LEAVE_APPLIED
+  LEAVE_APPROVED
+  LEAVE_REJECTED
+  LEAVE_CANCELLED
+  INVOICE_GENERATED
+  INVOICE_PAID
+  EMPLOYEE_ADDED
+  ASSIGNMENT_CREATED
+  ASSIGNMENT_ENDED
+  PAYROLL_PROCESSED
+  PAYSLIP_GENERATED
+  DOCUMENT_UPLOADED
+  DOCUMENT_EXPIRING
+  CLIENT_PORTAL_INVITE
+  APPRAISAL_DUE
+  APPRAISAL_SELF_REVIEW
+  APPRAISAL_MANAGER_REVIEW
+  APPRAISAL_APPROVED
+  APPRAISAL_APPLIED
+  SYSTEM
+}
+
+enum AppraisalStatus {
+  DUE // cycle opened by the anniversary trigger, awaiting employee self-review
+  SELF_REVIEW // employee submitted self-review, awaiting manager
+  MANAGER_REVIEW // manager submitted rating/recommendation, awaiting admin
+  PENDING_APPROVAL // admin set final CTC, awaiting approval
+  APPROVED // approved, ready to apply (creates the salary revision)
+  APPLIED // salary revision created + effective; arrears (if any) resolved
+  SKIPPED // no change this cycle
+  REJECTED
+}
+
+// ============================================================
+// CLIENT PORTAL — External client login
+// ============================================================
+
+model ClientPortalUser {
+  id           String    @id @default(cuid())
+  tenantId     String    @map("tenant_id")
+  clientId     String    @map("client_id")
+  name         String
+  email        String
+  passwordHash String?   @map("password_hash") // legacy; portal now uses email OTP
+  otpHash      String?   @map("otp_hash")
+  otpExpiresAt DateTime? @map("otp_expires_at")
+  otpAttempts  Int       @default(0) @map("otp_attempts")
+  isActive     Boolean   @default(true) @map("is_active")
+  lastLoginAt  DateTime? @map("last_login_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  client Client @relation(fields: [clientId], references: [id])
+
+  @@unique([tenantId, email])
+  @@index([tenantId, clientId])
+  @@map("client_portal_users")
+}
+
+// ============================================================
+// KNOWLEDGE BASE — Help Content + Articles
+// ============================================================
+
+model HelpContent {
+  id             String   @id @default(cuid())
+  tenantId       String   @map("tenant_id")
+  key            String // e.g. "employee.salary"
+  module         String // e.g. "employees"
+  fieldName      String   @map("field_name")
+  title          String
+  description    String   @db.Text
+  example        String?
+  validationRule String?  @map("validation_rule")
+  learnMoreUrl   String?  @map("learn_more_url")
+  isActive       Boolean  @default(true) @map("is_active")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@unique([tenantId, key])
+  @@index([tenantId, module])
+  @@map("help_contents")
+}
+
+model KbArticle {
+  id          String     @id @default(cuid())
+  tenantId    String     @map("tenant_id")
+  slug        String
+  title       String
+  content     String     @db.Text
+  excerpt     String?    @db.Text
+  module      String // e.g. "payroll"
+  category    KbCategory @default(GUIDE)
+  tags        String[]   @default([])
+  isPublished Boolean    @default(false) @map("is_published")
+  viewCount   Int        @default(0) @map("view_count")
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+  deletedAt   DateTime?  @map("deleted_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@unique([tenantId, slug])
+  @@index([tenantId, module])
+  @@index([tenantId, category])
+  @@map("kb_articles")
+}
+
+enum KbCategory {
+  GUIDE
+  FAQ
+  POLICY
+  COMPLIANCE
+  TROUBLESHOOTING
+}
+
+enum OnboardingStatus {
+  INVITED
+  OFFER_PENDING
+  DETAILS_PENDING
+  DOCUMENTS_PENDING
+  COMPLETED
+}
+
+enum ProfileChangeStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model ProfileChangeRequest {
+  id            String              @id @default(cuid())
+  tenantId      String              @map("tenant_id")
+  employeeId    String              @map("employee_id")
+  requestedBy   String              @map("requested_by")
+  changes       Json // { field: { old: value, new: value } }
+  status        ProfileChangeStatus @default(PENDING)
+  reviewedBy    String?             @map("reviewed_by")
+  reviewedAt    DateTime?           @map("reviewed_at")
+  reviewComment String?             @map("review_comment")
+  createdAt     DateTime            @default(now()) @map("created_at")
+  updatedAt     DateTime            @updatedAt @map("updated_at")
+
+  tenant   Tenant   @relation(fields: [tenantId], references: [id])
+  employee Employee @relation(fields: [employeeId], references: [id])
+
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@index([tenantId, employeeId])
+  @@map("profile_change_requests")
+}
+
+model OfferLetter {
+  id              String            @id @default(cuid())
+  tenantId        String            @map("tenant_id")
+  employeeId      String            @unique @map("employee_id")
+  designation     String
+  department      String?
+  salary          Decimal           @db.Decimal(12, 2)
+  joiningDate     DateTime          @map("joining_date")
+  probationMonths Int               @default(6) @map("probation_months")
+  workLocation    String?           @map("work_location")
+  reportingTo     String?           @map("reporting_to")
+  workSchedule    String?           @map("work_schedule") // e.g. "Mon-Fri, 9AM-6PM"
+  employmentType  WorkSchedule      @default(FULL_TIME) @map("employment_type") // Full Time / Part Time
+  benefits        String? // free-text benefits description
+  terms           String?           @db.Text // additional terms & conditions
+  status          OfferLetterStatus @default(SENT)
+  acceptedAt      DateTime?         @map("accepted_at")
+  createdAt       DateTime          @default(now()) @map("created_at")
+  updatedAt       DateTime          @updatedAt @map("updated_at")
+
+  tenant   Tenant   @relation(fields: [tenantId], references: [id])
+  employee Employee @relation(fields: [employeeId], references: [id])
+
+  @@index([tenantId])
+  @@map("offer_letters")
+}
+
+enum OfferLetterStatus {
+  SENT
+  ACCEPTED
+  REJECTED
+}
+
+model LetterTemplate {
+  id          String     @id @default(cuid())
+  tenantId    String     @map("tenant_id")
+  type        LetterType
+  name        String
+  description String?
+  filePath    String     @map("file_path")
+  variables   Json       @default("[]")
+  isDefault   Boolean    @default(false) @map("is_default")
+  isActive    Boolean    @default(true) @map("is_active")
+  version     Int        @default(1)
+  createdBy   String?    @map("created_by")
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+
+  tenant    Tenant            @relation(fields: [tenantId], references: [id])
+  generated GeneratedLetter[]
+
+  @@index([tenantId, type, isActive])
+  @@map("letter_templates")
+}
+
+model GeneratedLetter {
+  id             String       @id @default(cuid())
+  tenantId       String       @map("tenant_id")
+  templateId     String       @map("template_id")
+  type           LetterType
+  employeeId     String?      @map("employee_id")
+  clientId       String?      @map("client_id")
+  assignmentId   String?      @map("assignment_id")
+  referenceNo    String?      @map("reference_no")
+  fileName       String       @map("file_name")
+  filePath       String       @map("file_path")
+  pdfPath        String?      @map("pdf_path")
+  variables      Json
+  status         LetterStatus @default(DRAFT)
+  generatedBy    String       @map("generated_by")
+  generatedAt    DateTime     @default(now()) @map("generated_at")
+  sentAt         DateTime?    @map("sent_at")
+  sentTo         String?      @map("sent_to")
+  acceptedAt     DateTime?    @map("accepted_at")
+  signedFilePath String?      @map("signed_file_path")
+  notes          String?
+
+  tenant     Tenant              @relation(fields: [tenantId], references: [id])
+  template   LetterTemplate      @relation(fields: [templateId], references: [id])
+  employee   Employee?           @relation(fields: [employeeId], references: [id])
+  client     Client?             @relation(fields: [clientId], references: [id])
+  assignment EmployeeAssignment? @relation(fields: [assignmentId], references: [id])
+
+  @@index([tenantId, type, generatedAt])
+  @@index([tenantId, employeeId])
+  @@index([tenantId, clientId])
+  @@index([tenantId, referenceNo])
+  @@map("generated_letters")
+}
+
+model TenantLetterSettings {
+  tenantId             String   @id @map("tenant_id")
+  defaultWorkingHours  String   @default("9 hours/day, 6 days/week") @map("default_working_hours")
+  defaultProbationDays Int      @default(90) @map("default_probation_days")
+  defaultLocation      String   @default("New Delhi") @map("default_location")
+  signatoryName        String?  @map("signatory_name")
+  signatoryTitle       String?  @map("signatory_title")
+  refNumberPrefix      String   @default("LEGELP/ZT") @map("ref_number_prefix")
+  employeeCodePrefix   String   @default("LE") @map("employee_code_prefix") // auto employee-code prefix → LE1178
+  counters             Json     @default("{}")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@map("tenant_letter_settings")
+}
+
+model TenantInvoiceSettings {
+  tenantId            String   @id @map("tenant_id")
+  emailSubject        String?  @map("email_subject") // legacy single template (superseded by InvoiceEmailTemplate)
+  emailBody           String?  @map("email_body") // legacy
+  // Free-text block printed under "Payment Instructions" on the invoice PDF
+  paymentInstructions String?  @map("payment_instructions")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@map("tenant_invoice_settings")
+}
+
+// A named, reusable invoice email template. Body is PLAIN TEXT (with
+// {{variables}}) — converted to formatted HTML at send time, so admins never
+// have to write HTML.
+model InvoiceEmailTemplate {
+  id        String   @id @default(cuid())
+  tenantId  String   @map("tenant_id")
+  name      String
+  subject   String
+  body      String // plain text, supports {{variables}}
+  isDefault Boolean  @default(false) @map("is_default")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@unique([tenantId, name])
+  @@index([tenantId])
+  @@map("invoice_email_templates")
+}
+
+enum LetterType {
+  OFFER_LETTER
+  APPOINTMENT_LETTER
+  EXPERIENCE_LETTER
+  CLIENT_AGREEMENT
+}
+
+enum LetterStatus {
+  DRAFT
+  SENT
+  ACCEPTED
+  REJECTED
+  VOIDED
+}
+
+model InvoicePayment {
+  id                      String        @id @default(cuid())
+  tenantId                String        @map("tenant_id")
+  invoiceId               String        @map("invoice_id")
+  paidOn                  DateTime      @map("paid_on") @db.Date
+  amount                  Decimal       @db.Decimal(14, 2)
+  currency                String // may differ from invoice currency
+  exchangeRate            Decimal?      @map("exchange_rate") @db.Decimal(10, 6)
+  amountInInvoiceCurrency Decimal       @map("amount_in_invoice_currency") @db.Decimal(14, 2)
+  method                  PaymentMethod
+  reference               String?
+  bankFee                 Decimal?      @map("bank_fee") @db.Decimal(10, 2)
+  notes                   String?
+  recordedBy              String        @map("recorded_by")
+  createdAt               DateTime      @default(now()) @map("created_at")
+
+  tenant  Tenant  @relation(fields: [tenantId], references: [id])
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, invoiceId])
+  @@index([tenantId, paidOn])
+  @@map("invoice_payments")
+}
+
+enum PaymentMethod {
+  BANK_TRANSFER
+  PAYONEER
+  WIRE
+  CREDIT_CARD
+  CHECK
+  CASH
+  OTHER
+}
+
+model MonthlyAttendanceOverride {
+  id          String   @id @default(cuid())
+  tenantId    String   @map("tenant_id")
+  employeeId  String   @map("employee_id")
+  year        Int
+  month       Int
+  workingDays Decimal  @default(0) @map("working_days") @db.Decimal(5, 2)
+  timeoff     Decimal  @default(0) @db.Decimal(5, 2)
+  overTime    Decimal  @default(0) @map("over_time") @db.Decimal(6, 2)
+  lateCount   Int      @default(0) @map("late_count")
+  earlyCount  Int      @default(0) @map("early_count")
+  source      String   @default("UPLOAD")
+  uploadedBy  String?  @map("uploaded_by")
+  notes       String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  tenant   Tenant   @relation(fields: [tenantId], references: [id])
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, employeeId, year, month])
+  @@index([tenantId, year, month])
+  @@map("monthly_attendance_overrides")
+}
+
+model TaxSlab {
+  id            String    @id @default(cuid())
+  tenantId      String    @map("tenant_id")
+  regime        TaxRegime
+  financialYear String    @map("financial_year")
+  fromAmount    Decimal   @map("from_amount") @db.Decimal(12, 2)
+  toAmount      Decimal?  @map("to_amount") @db.Decimal(12, 2)
+  ratePct       Decimal   @map("rate_pct") @db.Decimal(5, 2)
+  sortOrder     Int       @default(0) @map("sort_order")
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  @@index([tenantId, regime, financialYear])
+  @@map("tax_slabs")
+}
+
+model TaxRegimeConfig {
+  id                String    @id @default(cuid())
+  tenantId          String    @map("tenant_id")
+  regime            TaxRegime
+  financialYear     String    @map("financial_year")
+  standardDeduction Decimal   @default(0) @map("standard_deduction") @db.Decimal(12, 2)
+  rebateMaxTaxable  Decimal   @default(0) @map("rebate_max_taxable") @db.Decimal(12, 2)
+  cessPct           Decimal   @default(4) @map("cess_pct") @db.Decimal(5, 2)
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  @@unique([tenantId, regime, financialYear])
+  @@map("tax_regime_configs")
+}
+
+model ItDeclaration {
+  id               String              @id @default(cuid())
+  tenantId         String              @map("tenant_id")
+  employeeId       String              @map("employee_id")
+  financialYear    String              @map("financial_year")
+  regime           TaxRegime           @default(OLD)
+  status           ItDeclarationStatus @default(DRAFT)
+  sec80C           Decimal             @default(0) @map("sec_80c") @db.Decimal(12, 2)
+  sec80CCD1B       Decimal             @default(0) @map("sec_80ccd1b") @db.Decimal(12, 2)
+  sec80D           Decimal             @default(0) @map("sec_80d") @db.Decimal(12, 2)
+  sec80E           Decimal             @default(0) @map("sec_80e") @db.Decimal(12, 2)
+  sec80G           Decimal             @default(0) @map("sec_80g") @db.Decimal(12, 2)
+  sec80TTA         Decimal             @default(0) @map("sec_80tta") @db.Decimal(12, 2)
+  homeLoanInterest Decimal             @default(0) @map("home_loan_interest") @db.Decimal(12, 2)
+  hraRentPaid      Decimal             @default(0) @map("hra_rent_paid") @db.Decimal(12, 2)
+  metroCity        Boolean             @default(false) @map("metro_city")
+  otherDeductions  Decimal             @default(0) @map("other_deductions") @db.Decimal(12, 2)
+  submittedAt      DateTime?           @map("submitted_at")
+  reviewedBy       String?             @map("reviewed_by")
+  reviewedAt       DateTime?           @map("reviewed_at")
+  remarks          String?
+  createdAt        DateTime            @default(now()) @map("created_at")
+  updatedAt        DateTime            @updatedAt @map("updated_at")
+
+  employee Employee @relation(fields: [employeeId], references: [id])
+  Tenant   Tenant   @relation(fields: [tenantId], references: [id])
+
+  @@unique([tenantId, employeeId, financialYear])
+  @@index([tenantId, status])
+  @@map("it_declarations")
+}
+
+// ============================================================
+// HR / BILLING AGENT — conversational assistant (M1)
+// ============================================================
+
+model AgentConversation {
+  id        String   @id @default(cuid())
+  tenantId  String   @map("tenant_id")
+  userId    String   @map("user_id")
+  domain    String? // 'hr' | 'billing' | null (mixed) — which tool-pack drove it
+  title     String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  messages AgentMessage[]
+
+  @@index([tenantId, userId, updatedAt])
+  @@map("agent_conversations")
+}
+
+model AgentMessage {
+  id             String   @id @default(cuid())
+  conversationId String   @map("conversation_id")
+  tenantId       String   @map("tenant_id")
+  role           String // 'user' | 'assistant' | 'tool'
+  content        String?  @db.Text
+  toolName       String?  @map("tool_name")
+  toolInput      Json?    @map("tool_input")
+  toolResult     Json?    @map("tool_result")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  conversation AgentConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId, createdAt])
+  @@map("agent_messages")
+}
+
+model AgentPendingAction {
+  id             String    @id @default(cuid())
+  tenantId       String    @map("tenant_id")
+  userId         String    @map("user_id")
+  conversationId String?   @map("conversation_id")
+  tool           String
+  input          Json // resolved input, ready to execute
+  summary        String    @db.Text
+  details        Json?
+  status         String    @default("PENDING") // PENDING | EXECUTED | CANCELLED
+  result         Json?
+  createdAt      DateTime  @default(now()) @map("created_at")
+  executedAt     DateTime? @map("executed_at")
+
+  @@index([tenantId, userId, status])
+  @@map("agent_pending_actions")
+}
+
+// ============================================================
+// EXIT / OFFBOARDING — full-and-final settlement (M4)
+// ============================================================
+
+model EmployeeExit {
+  id                  String    @id @default(cuid())
+  tenantId            String    @map("tenant_id")
+  employeeId          String    @unique @map("employee_id")
+  exitType            String    @default("RESIGNATION") // RESIGNATION | TERMINATION
+  resignationDate     DateTime? @map("resignation_date") @db.Date
+  lastWorkingDay      DateTime  @map("last_working_day") @db.Date
+  reason              String?
+  status              String    @default("INITIATED") // INITIATED | SETTLED | CANCELLED
+  // Full-and-final (computed at settle)
+  ctcMonthly          Decimal?  @map("ctc_monthly") @db.Decimal(12, 2)
+  pendingSalaryDays   Decimal?  @map("pending_salary_days") @db.Decimal(6, 2)
+  pendingSalaryAmount Decimal?  @map("pending_salary_amount") @db.Decimal(12, 2)
+  adjustments         Json? // [{ label, amount }]  (+ credit / - recovery)
+  netSettlement       Decimal?  @map("net_settlement") @db.Decimal(12, 2)
+  settlementNotes     String?   @map("settlement_notes")
+  settlementPdfPath   String?   @map("settlement_pdf_path")
+  settledAt           DateTime? @map("settled_at")
+  initiatedBy         String?   @map("initiated_by")
+  settledBy           String?   @map("settled_by")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+
+  @@index([tenantId, status])
+  @@map("employee_exits")
+}

@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#4338ca"/>
+      <stop offset="0.5" stop-color="#4f46e5"/>
+      <stop offset="1" stop-color="#3730a3"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.42" r="0.6">
+      <stop offset="0" stop-color="#6366f1" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#6366f1" stop-opacity="0"/>
+    </radialGradient>
+    <g id="globe">
+      <circle cx="0" cy="0" r="120" fill="none" stroke="#ffffff" stroke-width="3"/>
+      <ellipse cx="0" cy="0" rx="120" ry="46" fill="none" stroke="#ffffff" stroke-width="3"/>
+      <ellipse cx="0" cy="0" rx="120" ry="90" fill="none" stroke="#ffffff" stroke-width="3"/>
+      <ellipse cx="0" cy="0" rx="46" ry="120" fill="none" stroke="#ffffff" stroke-width="3"/>
+      <ellipse cx="0" cy="0" rx="90" ry="120" fill="none" stroke="#ffffff" stroke-width="3"/>
+      <line x1="-120" y1="0" x2="120" y2="0" stroke="#ffffff" stroke-width="3"/>
+      <line x1="0" y1="-120" x2="0" y2="120" stroke="#ffffff" stroke-width="3"/>
+    </g>
+  </defs>
+
+  <rect width="1280" height="720" fill="url(#bg)"/>
+  <rect width="1280" height="720" fill="url(#glow)"/>
+
+  <!-- soft depth circles -->
+  <circle cx="160" cy="600" r="220" fill="#ffffff" opacity="0.04"/>
+  <circle cx="1120" cy="140" r="260" fill="#ffffff" opacity="0.05"/>
+  <circle cx="1180" cy="640" r="160" fill="#312e81" opacity="0.35"/>
+
+  <!-- faint globe watermark, upper area behind the person -->
+  <g transform="translate(640,300)" opacity="0.10">
+    <use href="#globe"/>
+  </g>
+
+  <!-- brand lockup, bottom-left -->
+  <g transform="translate(64,636)">
+    <g transform="scale(0.16)" opacity="0.95">
+      <use href="#globe"/>
+    </g>
+    <text x="44" y="10" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="34" font-weight="700" fill="#ffffff" letter-spacing="0.5">zedtreeo</text>
+    <text x="44" y="34" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="15" font-weight="500" fill="#c7d2fe" letter-spacing="1.5">WORKFORCE MANAGEMENT</text>
+  </g>
+</svg>

@@ -1,0 +1,64 @@
+// ============================================================
+// KNOWLEDGE BASE — Field Tooltips + KB Articles
+// ============================================================
+
+model HelpContent {
+  id              String    @id @default(cuid())
+  tenantId        String    @map("tenant_id")
+  key             String    // e.g. "employee.salary", "leave.defaultDays"
+  module          String    // e.g. "employees", "leaves", "payroll"
+  fieldName       String    @map("field_name") // e.g. "salary", "defaultDays"
+  title           String    // Short label: "Monthly Salary (CTC)"
+  description     String    @db.Text // Tooltip body text
+  example         String?   @db.Text // Example value: "₹45,000"
+  validationRule  String?   @map("validation_rule") @db.Text // "Must be a positive number"
+  learnMoreUrl    String?   @map("learn_more_url") // Link to KB article
+  isActive        Boolean   @default(true) @map("is_active")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  tenant          Tenant    @relation(fields: [tenantId], references: [id])
+
+  @@unique([tenantId, key])
+  @@index([tenantId])
+  @@index([tenantId, module])
+  @@map("help_contents")
+}
+
+model KbArticle {
+  id              String          @id @default(cuid())
+  tenantId        String          @map("tenant_id")
+  slug            String          // URL-friendly slug
+  title           String
+  content         String          @db.Text // Markdown content
+  excerpt         String?         @db.Text // Short summary for search results
+  module          String          // e.g. "employees", "payroll", "leaves"
+  category        KbCategory      @default(GUIDE)
+  tags            String[]        @default([]) // e.g. ["salary", "ctc", "compliance"]
+  isPublished     Boolean         @default(false) @map("is_published")
+  viewCount       Int             @default(0) @map("view_count")
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
+  deletedAt       DateTime?       @map("deleted_at")
+
+  tenant          Tenant          @relation(fields: [tenantId], references: [id])
+
+  @@unique([tenantId, slug])
+  @@index([tenantId])
+  @@index([tenantId, module])
+  @@index([tenantId, isPublished])
+  @@index([tenantId, deletedAt])
+  @@map("kb_articles")
+}
+
+enum KbCategory {
+  GUIDE           // Step-by-step how-to
+  FAQ             // Frequently asked question
+  POLICY          // Company policy reference
+  COMPLIANCE      // Legal/regulatory info
+  TROUBLESHOOTING // Fix common issues
+}
+
+// --- Add these relations to Tenant model ---
+// helpContents    HelpContent[]
+// kbArticles      KbArticle[]
