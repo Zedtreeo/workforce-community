@@ -4,11 +4,10 @@ import { OnboardingService } from './onboarding.service';
 import { EmployeeCodeService } from './employee-code.service';
 import { PrismaModule } from '../../prisma';
 import { EmailModule } from '../email/email.module';
-import { ResumeModule } from '../resume/resume.module';
 import { LettersModule } from '../letters/letters.module';
 
 @Module({
-  imports: [PrismaModule, EmailModule, ResumeModule, LettersModule],
+  imports: [PrismaModule, EmailModule, LettersModule],
   controllers: [OnboardingController],
   providers: [OnboardingService, EmployeeCodeService],
   exports: [OnboardingService],

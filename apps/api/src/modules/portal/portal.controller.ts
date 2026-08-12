@@ -6,8 +6,6 @@ import { PortalService } from './portal.service';
 import { AuthGuard } from '../../common/guards/auth.guard';
 import { TenantGuard } from '../../common/guards/tenant.guard';
 import { PortalApplyLeaveDto, AttendanceCorrectionDto } from './portal.dto';
-import { AppraisalsService } from '../appraisals/appraisals.service';
-import { SelfReviewDto } from '../appraisals/dto/appraisals.dto';
 
 @Controller('portal')
 @ApiTags('Employee Portal')
@@ -16,20 +14,7 @@ import { SelfReviewDto } from '../appraisals/dto/appraisals.dto';
 export class PortalController {
   constructor(
     private readonly portalService: PortalService,
-    private readonly appraisals: AppraisalsService,
   ) {}
-
-  @Get('appraisal')
-  @ApiOperation({ summary: 'My current open appraisal cycle (self-review), if any' })
-  getMyAppraisal(@Req() req: any) {
-    return this.appraisals.getMyAppraisal(req.tenantId, req.user.email);
-  }
-
-  @Post('appraisal/:id/self-review')
-  @ApiOperation({ summary: 'Submit my appraisal self-review' })
-  submitSelfReview(@Req() req: any, @Param('id') id: string, @Body() dto: SelfReviewDto) {
-    return this.appraisals.submitSelfReview(req.tenantId, req.user.email, id, dto);
-  }
 
   @Get('dashboard')
   @ApiOperation({ summary: 'My dashboard — today snapshot' })

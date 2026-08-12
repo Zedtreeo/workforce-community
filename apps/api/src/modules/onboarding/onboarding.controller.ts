@@ -6,7 +6,6 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiConsumes, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { OnboardingService } from './onboarding.service';
 import { EmployeeCodeService } from './employee-code.service';
-import { ResumeService } from '../resume/resume.service';
 import { AuthGuard } from '../../common/guards/auth.guard';
 import { TenantGuard } from '../../common/guards/tenant.guard';
 import { RbacGuard } from '../../common/guards/rbac.guard';
@@ -19,21 +18,9 @@ export class OnboardingController {
   constructor(
     private readonly onboardingService: OnboardingService,
     private readonly employeeCode: EmployeeCodeService,
-    private readonly resume: ResumeService,
   ) {}
 
   // ── Admin endpoints (protected) ──
-
-  @Post('parse-resume')
-  @ApiBearerAuth('bearer')
-  @UseGuards(AuthGuard, TenantGuard, RbacGuard)
-  @Roles(UserRole.ADMIN)
-  @ApiConsumes('multipart/form-data')
-  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 8 * 1024 * 1024 } }))
-  @ApiOperation({ summary: 'Extract candidate details from a resume (PDF/image) to pre-fill the offer' })
-  parseResume(@UploadedFile() file: any) {
-    return this.resume.extract(file);
-  }
 
   @Get('next-employee-code')
   @ApiBearerAuth('bearer')

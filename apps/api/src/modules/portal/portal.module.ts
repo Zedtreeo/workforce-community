@@ -4,10 +4,9 @@ import { PortalService } from './portal.service';
 import { LeavesModule } from '../leaves/leaves.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { AttendanceModule } from '../attendance/attendance.module';
-import { AppraisalsModule } from '../appraisals/appraisals.module';
 
 @Module({
-  imports: [LeavesModule, NotificationsModule, AttendanceModule, AppraisalsModule],
+  imports: [LeavesModule, NotificationsModule, AttendanceModule],
   controllers: [PortalController],
   providers: [PortalService],
 })
