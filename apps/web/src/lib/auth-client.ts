@@ -2,11 +2,7 @@ import { createAuthClient } from 'better-auth/react';
 import { emailOTPClient } from 'better-auth/client/plugins';
 
 function getAuthBaseURL(): string {
-  if (typeof window !== 'undefined') {
-    const hostname = window.location.hostname;
-    if (hostname === 'demo.zedtreeo.io') return 'https://api-demo.zedtreeo.io';
-    if (hostname === 'hrms.zedtreeo.io') return 'https://api-hrms.zedtreeo.io';
-  }
+  // Self-host: derived from NEXT_PUBLIC_API_URL (strip the /api/v1 suffix).
   return process.env.NEXT_PUBLIC_API_URL?.replace('/api/v1', '') || 'http://localhost:4000';
 }
 

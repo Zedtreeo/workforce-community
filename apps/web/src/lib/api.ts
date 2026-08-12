@@ -1,9 +1,5 @@
 function getApiBase(): string {
-  if (typeof window !== 'undefined') {
-    const hostname = window.location.hostname;
-    if (hostname === 'demo.zedtreeo.io') return 'https://api-demo.zedtreeo.io/api/v1';
-    if (hostname === 'hrms.zedtreeo.io') return 'https://api-hrms.zedtreeo.io/api/v1';
-  }
+  // Self-host: point the web app at your API via NEXT_PUBLIC_API_URL.
   return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1';
 }
 
