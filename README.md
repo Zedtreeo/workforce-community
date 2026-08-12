@@ -6,7 +6,8 @@
 The **free, open-source, self-hostable** edition of **Zedtreeo Workforce** — a modern HRMS for small and mid-size teams. Run your own people, attendance, leave, payroll, onboarding, and client billing platform.
 
 > 🌐 **Hosted version, Pro features & priority support →** **[zedtreeo.com](https://zedtreeo.com)**
-> 🟢 **Live demo →** `https://ce-demo.zedtreeo.com` · sign in with `admin@demo.com` (one-time code by email)
+> 🟢 **Live demo →** **https://demo.zedtreeo.io/login**
+> 🐳 **Docker images →** [`workforce-community-api`](https://hub.docker.com/r/zedtreeo1/workforce-community-api) · [`workforce-community-web`](https://hub.docker.com/r/zedtreeo1/workforce-community-web)
 
 ---
 

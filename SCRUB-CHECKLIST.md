@@ -46,7 +46,7 @@ employees · departments · attendance · shifts · leave · holidays · payroll
 - [ ] README screenshots/GIFs (capture from the running demo).
 - [ ] CI (lint/typecheck/test — reuse the fixed workflow pattern).
 - [ ] LICENSE full text, COMMERCIAL, CONTRIBUTING + CLA, SECURITY, issue/PR templates.
-- [ ] Hosted demo at `ce-demo.zedtreeo.com`.
+- [x] Hosted demo live at https://demo.zedtreeo.io/login.
 
 ---
 A [Zedtreeo](https://zedtreeo.com) project · [Chandra Prakash](https://cpchander.com) + Claude (Anthropic).
