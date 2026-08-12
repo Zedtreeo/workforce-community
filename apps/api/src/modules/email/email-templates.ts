@@ -15,7 +15,7 @@ export interface TenantBrand {
 }
 
 const DEFAULT_BRAND: TenantBrand = {
-  companyName: 'HRMS Platform',
+  companyName: 'Zedtreeo Workforce',
   accentColor: '#2563eb',
 };
 

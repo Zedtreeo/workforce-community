@@ -718,7 +718,7 @@ export class InvoicesService {
       select: { name: true, gstNumber: true, panNumber: true },
     });
     return {
-      name: tenant?.name ?? 'HRMS Platform',
+      name: tenant?.name ?? 'Zedtreeo Workforce',
       registeredAddress: null,
       taxLine: null,
       gstNumber: tenant?.gstNumber ?? null,

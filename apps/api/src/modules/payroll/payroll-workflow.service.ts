@@ -613,7 +613,7 @@ export class PayrollWorkflowService {
 
     // Generate Excel workbook
     const workbook = new ExcelJS.Workbook();
-    workbook.creator = 'HRMS Platform';
+    workbook.creator = 'Zedtreeo Workforce';
     workbook.created = new Date();
 
     const sheet = workbook.addWorksheet('Bank Transfer');
@@ -771,7 +771,7 @@ export class PayrollWorkflowService {
     const tenant = await this.prisma.tenant.findFirst({ where: { id: tenantId }, select: { name: true, panNumber: true, tanNumber: true } });
 
     const wb = new ExcelJS.Workbook();
-    wb.creator = 'HRMS Platform';
+    wb.creator = 'Zedtreeo Workforce';
     wb.created = new Date();
     const ws = wb.addWorksheet('TDS Payout');
     ws.columns = [
@@ -830,7 +830,7 @@ export class PayrollWorkflowService {
 
     const MN = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     const wb = new ExcelJS.Workbook();
-    wb.creator = 'HRMS Platform';
+    wb.creator = 'Zedtreeo Workforce';
     const ws = wb.addWorksheet('Payroll Summary');
     ws.columns = [
       { header: 'Emp Code', key: 'code', width: 14 },

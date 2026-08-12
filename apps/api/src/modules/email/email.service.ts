@@ -439,7 +439,7 @@ export class EmailService {
     },
     brand?: Partial<TenantBrand>,
   ) {
-    const companyName = brand?.companyName || 'HRMS Platform';
+    const companyName = brand?.companyName || 'Zedtreeo Workforce';
 
     const body =
       heading(`Welcome to ${escapeHtml(companyName)}!`) +

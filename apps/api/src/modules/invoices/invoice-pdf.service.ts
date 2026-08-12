@@ -61,7 +61,7 @@ export class InvoicePdfService {
       const currency = invoice.currency;
 
       // ── Header ──
-      const companyName = invoice.tenant?.name ?? 'HRMS Platform';
+      const companyName = invoice.tenant?.name ?? 'Zedtreeo Workforce';
       doc.fontSize(22).font('Helvetica-Bold').text(companyName, 50, 50);
       doc.fontSize(9).font('Helvetica').fillColor('#666666');
       if (invoice.tenant?.registeredAddress) {

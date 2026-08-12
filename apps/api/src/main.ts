@@ -116,9 +116,9 @@ async function bootstrap() {
   const enableDocs = config.get('ENABLE_DOCS', 'true') === 'true';
   if (enableDocs) {
     const swaggerConfig = new DocumentBuilder()
-      .setTitle('HRMS Platform API')
+      .setTitle('Zedtreeo Workforce API')
       .setDescription(
-        'Multi-tenant HRMS, Employee Monitoring & Billing Platform.\n\n' +
+        'Multi-tenant HR & billing platform (Community Edition).\n\n' +
         '**Authentication:** All endpoints (except `/health` and `/auth`) require a Bearer token.\n\n' +
         '**Tenant Isolation:** Every request is scoped to the authenticated user\'s tenant. ' +
         'Cross-tenant access is not possible.\n\n' +
@@ -166,7 +166,7 @@ async function bootstrap() {
     });
 
     SwaggerModule.setup('docs', app, document, {
-      customSiteTitle: 'HRMS API Documentation',
+      customSiteTitle: 'Zedtreeo Workforce API',
       customCss: '.swagger-ui .topbar { display: none }',
       swaggerOptions: {
         persistAuthorization: true,

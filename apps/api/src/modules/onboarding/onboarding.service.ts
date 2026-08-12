@@ -155,7 +155,7 @@ export class OnboardingService {
       fill in your details, and upload your documents. After you submit, our HR team will
       review your application and contact you once approved — you’ll then sign in with a
       one-time code (OTP) sent to this email, no password needed.</p>
-      <p>— HRMS Platform</p>`;
+      <p>— Zedtreeo Workforce</p>`;
 
     // Generate + attach the offer letter PDF (best-effort — never block the invite).
     let attachments: { filename: string; content: Buffer; contentType?: string }[] | undefined;
