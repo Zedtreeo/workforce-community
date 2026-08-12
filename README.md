@@ -3,7 +3,7 @@
 <!-- Badges (add once repo is live): AGPL-3.0 · CI · GitHub stars · Docker pulls -->
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](./LICENSE)
 
-The **free, open-source, self-hostable** edition of **Zedtreeo Workforce** — a modern HRMS for small and mid-size teams. Run your own people, attendance, leave, payroll, onboarding, and client billing platform.
+The **free, open-source, self-hostable** edition of **Zedtreeo Workforce** — **workforce management software for SMEs, anywhere in the world.** Run your own people, attendance, leave, payroll, onboarding, and client-billing platform — and because it's your code, it's **fully customizable** to how your business works.
 
 > 🌐 **Hosted version, Pro features & priority support →** **[zedtreeo.com](https://zedtreeo.com)**
 > 🟢 **Live demo →** **https://demo.zedtreeo.io/login**
@@ -30,7 +30,7 @@ The **free, open-source, self-hostable** edition of **Zedtreeo Workforce** — a
 | Core HRMS (above) | ✅ | ✅ |
 | AI HR & Billing Assistant | — | ✅ |
 | Calling / Chat / Groups | — | ✅ |
-| Tax-grade payroll (TDS, Form 16/24Q/26Q, arrears) | — | ✅ |
+| Advanced statutory payroll (configurable tax & compliance) | — | ✅ |
 | Appraisal cycles → auto pay-revisions | — | ✅ |
 | Multi-entity & advanced invoicing | — | ✅ |
 | Managed hosting + priority support | — | ✅ |
