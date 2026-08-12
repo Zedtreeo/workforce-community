@@ -22,8 +22,9 @@ docker compose up        # full stack: postgres, redis, minio, mailpit, api, web
   ```
 
 ## Reporting bugs / requesting features
-Open a GitHub issue with clear steps to reproduce. For security issues, see
-[SECURITY.md](./SECURITY.md) — do **not** file a public issue.
+Open a GitHub issue with clear steps to reproduce. Have a feature idea or general
+feedback? Open an issue or email **support@zedtreeo.com**. For security issues,
+see [SECURITY.md](./SECURITY.md) — do **not** file a public issue.
 
 ## Scope
 This is the **Community Edition**. Pro features (AI assistant, calling/chat,

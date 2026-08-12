@@ -75,7 +75,8 @@ PRs welcome — see [CONTRIBUTING.md](./CONTRIBUTING.md). A lightweight **CLA** 
 
 ## 💬 Support
 
-- **Community:** [GitHub issues](https://github.com/zedtreeo/workforce-community/issues) (best-effort)
+- **Community:** [GitHub issues](https://github.com/Zedtreeo/workforce-community/issues) (best-effort)
+- **Feedback & feature requests:** **[support@zedtreeo.com](mailto:support@zedtreeo.com)**
 - **Priority support & managed hosting:** **[zedtreeo.com](https://zedtreeo.com)**
 
 ---
