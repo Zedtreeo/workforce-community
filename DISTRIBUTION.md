@@ -22,7 +22,7 @@ Fill **Status** (`todo` / `submitted` / `live`), the **URL** once listed, and **
 ## 2. Package / image registries (install + listing)
 | Platform | Status | URL | Notes |
 |---|---|---|---|
-| Docker Hub `zedtreeo/workforce-*` | todo | | description links back |
+| Docker Hub `zedtreeo1/workforce-community-{api,web}` | **live** | hub.docker.com/u/zedtreeo1 | ✏️ add repo descriptions + link back to zedtreeo.com |
 | GitHub Container Registry (GHCR) | todo | | via CI |
 
 ## 3. Tier 1 — self-host / OSS directories (highest leverage, dofollow)

@@ -39,11 +39,19 @@ The **free, open-source, self-hostable** edition of **Zedtreeo Workforce** — a
 ## 🚀 Quick start (one command)
 
 ```bash
-git clone https://github.com/zedtreeo/workforce-community
+git clone https://github.com/Zedtreeo/workforce-community
 cd workforce-community
 cp .env.example .env
 docker compose up
 ```
+
+**Faster (skip the build)** — pull the prebuilt images from Docker Hub:
+
+```bash
+docker compose pull && docker compose up -d
+```
+
+Images: [`zedtreeo1/workforce-community-api`](https://hub.docker.com/r/zedtreeo1/workforce-community-api) · [`zedtreeo1/workforce-community-web`](https://hub.docker.com/r/zedtreeo1/workforce-community-web)
 
 Open **http://localhost:3000** → enter `admin@demo.com`. Login is a one-time
 code sent by email — with the bundled Mailpit mail-catcher, grab it from the
