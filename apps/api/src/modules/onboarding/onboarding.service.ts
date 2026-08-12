@@ -141,7 +141,7 @@ export class OnboardingService {
 
   /** Send (or resend) the onboarding invite email with the magic link. */
   private async sendInviteEmail(employee: any, inviteToken: string) {
-    const baseUrl = process.env.WEB_BASE_URL || 'https://hrms.zedtreeo.io';
+    const baseUrl = process.env.WEB_BASE_URL || 'http://localhost:3000';
     const link = `${baseUrl}/onboarding/${inviteToken}`;
     const subject = `Your offer from your new employer — please complete onboarding`;
     const html = `
@@ -531,7 +531,7 @@ export class OnboardingService {
 
   /** Notify all admins/managers in the tenant that an application was submitted. */
   private async notifyAdminOfSubmission(employee: any) {
-    const baseUrl = process.env.WEB_BASE_URL || 'https://hrms.zedtreeo.io';
+    const baseUrl = process.env.WEB_BASE_URL || 'http://localhost:3000';
     const link = `${baseUrl}/employees/${employee.id}`;
     const admins = await this.prisma.user.findMany({
       where: { tenantId: employee.tenantId, role: { in: ['ADMIN' as any, 'MANAGER' as any, 'OWNER' as any] } },

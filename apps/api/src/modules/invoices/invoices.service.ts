@@ -832,12 +832,12 @@ export class InvoicesService {
   }
 
   /**
-   * Next invoice number in the form `LEGELP/ZT/{FY}/{seq}` — e.g. LEGELP/ZT/26-27/031.
+   * Next invoice number in the form `ORG/{FY}/{seq}` — e.g. ORG/26-27/031.
    * Sequence auto-increments per financial year (resets each FY). 3-digit zero-padded.
-   * Prefix is configurable via INVOICE_NUMBER_PREFIX (default "LEGELP/ZT").
+   * Prefix is configurable via INVOICE_NUMBER_PREFIX (default "ORG").
    */
   private async nextInvoiceNumber(tenantId: string, invoiceDate: Date, prefixOverride?: string): Promise<string> {
-    const prefix = prefixOverride || process.env.INVOICE_NUMBER_PREFIX || 'LEGELP/ZT';
+    const prefix = prefixOverride || process.env.INVOICE_NUMBER_PREFIX || 'ORG';
     const fy = this.finYear(invoiceDate);
     const seriesPrefix = `${prefix}/${fy}/`;
 

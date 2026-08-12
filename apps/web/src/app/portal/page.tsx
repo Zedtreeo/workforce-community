@@ -6,7 +6,6 @@ import { useSession } from '../../lib/auth-client';
 import { apiFetch } from '../../lib/api';
 import { DashboardLayout } from '../../components/dashboard-layout';
 import { Card, StatCard, Badge, PageSkeleton, PageHeader } from '../../components/ui';
-import { PortalInbox } from '../../components/portal/portal-inbox';
 import { CalendarClock, TreePalm, Landmark, Briefcase, CalendarDays, Clock, AlertTriangle, Building2, Globe, Phone, MapPin } from 'lucide-react';
 
 interface CompanyInfo { name: string; website: string | null; phone: string | null; address: string | null; logo: string | null; }
@@ -129,9 +128,6 @@ export default function PortalPage() {
             </Link>
           ))}
         </div>
-
-        {/* Inbox (only shows if the user has a linked @legelp.com mailbox) */}
-        <PortalInbox />
 
         {/* Today's Status */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

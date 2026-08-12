@@ -18,7 +18,7 @@ export class InvoiceQueueProducer implements OnModuleInit {
 
   async onModuleInit() {
     // Auto-gen DISABLED — invoices are generated manually, one per employee, via
-    // generate-for-assignment (LEGELP/ZT numbering, advance, assignment-dated).
+    // generate-for-assignment (ORG numbering, advance, assignment-dated).
     // The old per-client cron created wrong drafts, so remove any repeatable job
     // already persisted in Redis from a previous deploy.
     try {

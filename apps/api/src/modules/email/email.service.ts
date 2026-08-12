@@ -30,7 +30,7 @@ export class EmailService {
 
   constructor() {
     this.transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST || 'smtp.zeptomail.in',
+      host: process.env.SMTP_HOST || 'localhost',
       port: Number(process.env.SMTP_PORT) || 587,
       auth: {
         user: process.env.SMTP_USER || 'emailapikey',
@@ -42,8 +42,8 @@ export class EmailService {
   async send(payload: EmailPayload): Promise<void> {
     try {
       await this.transporter.sendMail({
-        from: process.env.SMTP_FROM_CONTACT || '"Legelp" <contact@legelp.com>',
-        replyTo: process.env.SMTP_REPLYTO_CONTACT || 'contact@legelp.com',
+        from: process.env.SMTP_FROM_CONTACT || '"Zedtreeo Workforce" <contact@example.com>',
+        replyTo: process.env.SMTP_REPLYTO_CONTACT || 'contact@example.com',
         to: payload.to,
         subject: payload.subject,
         html: payload.html,

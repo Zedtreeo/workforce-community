@@ -23,7 +23,7 @@ interface SendOpts {
 export class LetterMailerService {
   private readonly logger = new Logger(LetterMailerService.name);
   private readonly transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST || 'smtp.zeptomail.in',
+    host: process.env.SMTP_HOST || 'localhost',
     port: Number(process.env.SMTP_PORT) || 587,
     auth: { user: process.env.SMTP_USER || 'emailapikey', pass: process.env.SMTP_PASS || '' },
   });
@@ -57,8 +57,8 @@ export class LetterMailerService {
       <p>Best regards,<br/>HR Team</p>`;
 
     await this.transporter.sendMail({
-      from: process.env.SMTP_FROM_HR || '"Legelp HR" <hr@legelp.com>',
-      replyTo: process.env.SMTP_REPLYTO_HR || 'hr@legelp.com',
+      from: process.env.SMTP_FROM_HR || '"HR" <hr@example.com>',
+      replyTo: process.env.SMTP_REPLYTO_HR || 'hr@example.com',
       to: opts.to,
       subject: opts.subject || defaultSubject,
       html: opts.bodyHtml || defaultBody,

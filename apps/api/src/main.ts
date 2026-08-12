@@ -125,10 +125,9 @@ async function bootstrap() {
         '**Rate Limiting:** 60 requests/minute per IP (configurable per-route).',
       )
       .setVersion('1.0.0')
-      .setContact('HRMS Team', 'https://legelp.com', 'admin@legelp.com')
-      .setLicense('Proprietary', 'https://legelp.com/terms')
+      .setContact('Zedtreeo Workforce', 'https://zedtreeo.com', '')
+      .setLicense('AGPL-3.0', 'https://www.gnu.org/licenses/agpl-3.0.html')
       .addServer(`http://localhost:${config.get('PORT', config.get('API_PORT', 4000))}`, 'Local Development')
-      .addServer('https://api.legelp.com', 'Production')
       .addBearerAuth(
         {
           type: 'http',

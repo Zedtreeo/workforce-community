@@ -77,7 +77,7 @@ describe('LetterGenerationService', () => {
         data: { employee: { fullName: 'Original', address: 'orig' }, salary: { basicMonthly: 1000 } },
         editableFields: [],
       });
-      refNo.next.mockResolvedValue('LEGELP/ZT/26/OFF/00001');
+      refNo.next.mockResolvedValue('ORG/26/OFF/00001');
       carbone.render.mockResolvedValue({ buffer: Buffer.from('docx'), reportName: 'docx' });
       prisma.generatedLetter.create.mockResolvedValue({ id: 'gl1' });
 
@@ -90,7 +90,7 @@ describe('LetterGenerationService', () => {
       expect(rendered.employee.fullName).toBe('Override');   // override applied
       expect(rendered.employee.address).toBe('orig');        // unaltered keys kept
       expect(rendered.salary.basicMonthly).toBe(2000);
-      expect(rendered.referenceNo).toBe('LEGELP/ZT/26/OFF/00001');
+      expect(rendered.referenceNo).toBe('ORG/26/OFF/00001');
     });
 
     it('writes GeneratedLetter row and AuditLog with action=GENERATE', async () => {

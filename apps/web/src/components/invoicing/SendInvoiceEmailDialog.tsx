@@ -109,7 +109,7 @@ export function SendInvoiceEmailDialog({
             onChange={(e) => setCc(e.target.value)}
             placeholder="cc1@example.com, cc2@example.com"
           />
-          <p className="text-xs text-content-tertiary mt-1">billing@legelp.com is always CC'd automatically.</p>
+          <p className="text-xs text-content-tertiary mt-1">billing@example.com is always CC'd automatically.</p>
         </FormField>
         {templates.length > 0 && (
           <FormField label="Template">

@@ -56,7 +56,7 @@ export interface SendInvoiceInput {
 export class InvoiceMailerService {
   private readonly logger = new Logger(InvoiceMailerService.name);
   private readonly transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST || 'smtp.zeptomail.in',
+    host: process.env.SMTP_HOST || 'localhost',
     port: Number(process.env.SMTP_PORT) || 587,
     auth: { user: process.env.SMTP_USER || 'emailapikey', pass: process.env.SMTP_PASS || '' },
   });
@@ -108,7 +108,7 @@ export class InvoiceMailerService {
 
     // CC: always copy the billing mailbox + any user-supplied addresses (comma/semicolon
     // separated). Dedupe, and drop any that equal the To address.
-    const billingCc = process.env.INVOICE_BILLING_CC || 'billing@legelp.com';
+    const billingCc = process.env.INVOICE_BILLING_CC || 'billing@example.com';
     const ccList = [
       ...(input.cc ? input.cc.split(/[,;]/).map((s) => s.trim()) : []),
       billingCc,
@@ -117,8 +117,8 @@ export class InvoiceMailerService {
       .filter((e) => e !== input.to.toLowerCase());
 
     await this.transporter.sendMail({
-      from: process.env.SMTP_FROM_BILLING || '"Legelp Billing" <billing@legelp.com>',
-      replyTo: process.env.SMTP_REPLYTO_BILLING || 'billing@legelp.com',
+      from: process.env.SMTP_FROM_BILLING || '"Billing" <billing@example.com>',
+      replyTo: process.env.SMTP_REPLYTO_BILLING || 'billing@example.com',
       to: input.to,
       cc: cc.length ? cc : undefined,
       subject,

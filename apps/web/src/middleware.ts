@@ -1,11 +1,11 @@
 import { NextResponse, type NextRequest } from 'next/server';
 
-// Neither the private client portal (hrms.zedtreeo.io) nor the sample-data demo
-// (demo.zedtreeo.io) should be indexed by search engines — the demo is a bare
-// login page over synthetic data with no SEO value. Because the app is
-// client-rendered, a static <meta> tag is unreliable, so we set the
-// X-Robots-Tag HTTP header per-request for these hosts.
-const NOINDEX_HOSTS = new Set(['hrms.zedtreeo.io', 'demo.zedtreeo.io']);
+// Hosts that should NOT be indexed by search engines (e.g. a public demo).
+// Configure via NOINDEX_HOSTS (comma-separated). Empty = your instance is
+// indexable. Set as an HTTP header since the app is client-rendered.
+const NOINDEX_HOSTS = new Set(
+  (process.env.NOINDEX_HOSTS || '').split(',').map((h) => h.trim()).filter(Boolean),
+);
 
 export function middleware(req: NextRequest) {
   const res = NextResponse.next();

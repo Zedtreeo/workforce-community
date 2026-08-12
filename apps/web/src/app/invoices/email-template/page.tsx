@@ -189,7 +189,7 @@ export default function InvoiceEmailSettingsPage() {
             value={payInstr}
             onChange={(e) => setPayInstr(e.target.value)}
             rows={4}
-            placeholder={'e.g.\nPlease remit payment via Payoneer to billing@legelp.com.\nBank transfer details available on request.'}
+            placeholder={'e.g.\nPlease remit payment via Payoneer to billing@example.com.\nBank transfer details available on request.'}
             className="w-full px-3 py-2 border border-surface-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
           />
         </Card>

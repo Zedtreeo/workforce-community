@@ -2,7 +2,7 @@
 //
 // Per-tenant, per-type, year-prefixed counters with atomic increment.
 //
-// Format: {PREFIX}/{YY}/{TYPE_CODE}/{seq:5}    e.g. LEGELP/ZT/26/OFF/00042
+// Format: {PREFIX}/{YY}/{TYPE_CODE}/{seq:5}    e.g. ORG/26/OFF/00042
 //
 // Concurrency strategy: jsonb_set with a single UPDATE/RETURNING so the
 // increment is atomic at the row level. No SELECT-then-UPDATE race.
@@ -26,7 +26,7 @@ export class ReferenceNumberService {
 
   /**
    * Atomically increment + return the next sequence for (tenant, year, type).
-   * Returns e.g. "LEGELP/ZT/26/OFF/00042".
+   * Returns e.g. "ORG/26/OFF/00042".
    */
   async next(tenantId: string, type: LetterType, opts: { override?: string | null } = {}): Promise<string> {
     if (opts.override && opts.override.trim()) return opts.override.trim();
@@ -94,7 +94,7 @@ export class ReferenceNumberService {
       tenantId, String(year), month,
     );
     const n = rows.length ? Number(rows[0].n) : 0;
-    const prefix = (rows.length && rows[0].prefix) || 'LEGELP/ZT';
+    const prefix = (rows.length && rows[0].prefix) || 'ORG';
     return `${prefix}/${yy}/${month}/${String(n + 1).padStart(5, '0')}`;
   }
 }

@@ -150,7 +150,7 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
   };
 
   // Troubleshoot is a live-server maintenance console — never on the public demo.
-  const isDemoHost = typeof window !== 'undefined' && window.location.hostname === 'demo.zedtreeo.io';
+  const isDemoHost = typeof window !== 'undefined' && process.env.NEXT_PUBLIC_DEMO === 'true';
 
   const filteredItems = navItems.filter((item) => {
     if (item.href === '/troubleshoot' && isDemoHost) return false;

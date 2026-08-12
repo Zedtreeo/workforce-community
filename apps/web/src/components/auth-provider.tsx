@@ -24,7 +24,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isDemo, setIsDemo] = useState(false);
 
   useEffect(() => {
-    setIsDemo(window.location.hostname === 'demo.zedtreeo.io');
+    setIsDemo(process.env.NEXT_PUBLIC_DEMO === 'true');
   }, []);
 
   useEffect(() => {

@@ -29,7 +29,7 @@ export class EmployeesService {
     });
 
     // Fire-and-forget notification
-    const baseUrl = process.env.WEB_BASE_URL || 'https://hrms.zedtreeo.io';
+    const baseUrl = process.env.WEB_BASE_URL || 'http://localhost:3000';
     this.emailService.send({
       to: emp.email,
       subject: 'Your application has been approved — welcome aboard',

@@ -11,7 +11,7 @@ import { Shield, User, Building2, ArrowLeft } from 'lucide-react';
 function useIsDemo() {
   const [isDemo, setIsDemo] = useState(false);
   useEffect(() => {
-    setIsDemo(window.location.hostname === 'demo.zedtreeo.io');
+    setIsDemo(process.env.NEXT_PUBLIC_DEMO === 'true');
   }, []);
   return isDemo;
 }

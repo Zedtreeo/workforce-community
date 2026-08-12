@@ -64,7 +64,7 @@ export const auth = betterAuth({
       sameSite: 'none',
       secure: true,
       partitioned: true,
-      // Share cookie across subdomains (hrms.zedtreeo.io + api-hrms.zedtreeo.io)
+      // Share cookie across subdomains (your web + api hosts)
       // so <img src="/uploads/..."> requests on the web domain include the session.
       domain: process.env.AUTH_COOKIE_DOMAIN || undefined,
     },

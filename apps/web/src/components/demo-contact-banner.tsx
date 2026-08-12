@@ -4,8 +4,8 @@
 import { useEffect, useState } from 'react';
 import { Mail, LifeBuoy } from 'lucide-react';
 
-const DEMO_HOST = 'demo.zedtreeo.io';
-const SUPPORT_EMAIL = 'demo@zedtreeo.com';
+// Shown only when NEXT_PUBLIC_DEMO=true (e.g. a public demo instance).
+const SUPPORT_EMAIL = process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'hello@example.com';
 
 interface Props {
   /** "login" for the auth screen, "footer" for inside DashboardLayout. */
@@ -15,9 +15,7 @@ interface Props {
 export function DemoContactBanner({ variant = 'footer' }: Props) {
   const [isDemo, setIsDemo] = useState(false);
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setIsDemo(window.location.hostname === DEMO_HOST);
-    }
+    setIsDemo(process.env.NEXT_PUBLIC_DEMO === 'true');
   }, []);
   if (!isDemo) return null;
 

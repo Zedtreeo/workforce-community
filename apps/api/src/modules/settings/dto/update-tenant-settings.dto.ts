@@ -52,7 +52,7 @@ export class UpdateTenantSettingsDto {
   @MaxLength(17)
   esiNumber?: string;
 
-  @ApiPropertyOptional({ example: 'https://www.zedtreeo.com' })
+  @ApiPropertyOptional({ example: 'https://www.example.com' })
   @IsString()
   @IsOptional()
   @MaxLength(2048)

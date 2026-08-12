@@ -1,6 +1,6 @@
 import { ShieldCheck } from 'lucide-react';
 
-const SUPPORT_EMAIL = 'hr@legelp.com';
+const SUPPORT_EMAIL = 'hr@example.com';
 
 /**
  * Footer for the sign-in screen: a security trust line, a support email,
