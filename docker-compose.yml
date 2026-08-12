@@ -1,0 +1,66 @@
+# Zedtreeo Workforce — Community Edition
+# One-command self-host: `docker compose up`
+# NOTE: api/web images are placeholders until Phase 1 extraction is done.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-hrms}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
+      POSTGRES_DB: ${POSTGRES_DB:-hrms}
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-hrms} -d ${POSTGRES_DB:-hrms}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--maxmemory-policy", "noeviction"]
+    volumes:
+      - redis_data:/data
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${S3_ACCESS_KEY:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY:-change-me}
+    volumes:
+      - minio_data:/data
+    ports:
+      - "9001:9001"   # MinIO console (optional)
+
+  # Dev/self-host mail catcher — inbox UI at http://localhost:8025
+  mailpit:
+    image: axllent/mailpit:latest
+    ports:
+      - "8025:8025"
+
+  api:
+    image: ghcr.io/zedtreeo/workforce-community-api:latest
+    env_file: .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      minio:
+        condition: service_started
+    # First boot runs prisma migrate deploy + (SEED_DEMO) seed, then starts the API.
+
+  web:
+    image: ghcr.io/zedtreeo/workforce-community-web:latest
+    env_file: .env
+    depends_on:
+      - api
+    ports:
+      - "${WEB_PORT:-3000}:3000"
+
+volumes:
+  pg_data:
+  redis_data:
+  minio_data:

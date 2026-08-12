@@ -1,0 +1,18 @@
+# deps / build
+node_modules/
+dist/
+.next/
+coverage/
+*.tsbuildinfo
+
+# env & secrets — NEVER commit
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+ssh-keys/
+
+# os / editor
+.DS_Store
+*.log
