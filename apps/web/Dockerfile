@@ -22,6 +22,10 @@ COPY apps/web/ apps/web/
 
 RUN cd packages/db && npx prisma generate
 
+# Self-host: set your API URL at build time (NEXT_PUBLIC_* is baked into the
+# client bundle). Defaults to localhost for the docker-compose quickstart.
+ARG NEXT_PUBLIC_API_URL=http://localhost:4000/api/v1
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV DOCKER_BUILD=1
 RUN cd apps/web && pnpm run build

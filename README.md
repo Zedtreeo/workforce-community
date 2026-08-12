@@ -6,7 +6,7 @@
 The **free, open-source, self-hostable** edition of **Zedtreeo Workforce** — a modern HRMS for small and mid-size teams. Run your own people, attendance, leave, payroll, onboarding, and client billing platform.
 
 > 🌐 **Hosted version, Pro features & priority support →** **[zedtreeo.com](https://zedtreeo.com)**
-> 🟢 **Live demo →** `https://ce-demo.zedtreeo.com` · login `admin@demo.local` · OTP `123456`
+> 🟢 **Live demo →** `https://ce-demo.zedtreeo.com` · sign in with `admin@demo.com` (one-time code by email)
 
 ---
 
@@ -45,7 +45,10 @@ cp .env.example .env
 docker compose up
 ```
 
-Open **http://localhost:3000** → log in with `admin@demo.local` / OTP `123456` (shown in the Mailpit inbox at http://localhost:8025 in non-demo mode).
+Open **http://localhost:3000** → enter `admin@demo.com`. Login is a one-time
+code sent by email — with the bundled Mailpit mail-catcher, grab it from the
+inbox at **http://localhost:8025**. (Demo data — a synthetic company, employees,
+attendance, leave, payroll, clients & invoices — is seeded automatically.)
 
 Demo data (a synthetic company, employees, attendance, leave, payroll, clients & invoices) is seeded automatically on first boot.
 

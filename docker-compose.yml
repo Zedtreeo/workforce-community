@@ -41,8 +41,12 @@ services:
       - "8025:8025"
 
   api:
-    image: ghcr.io/zedtreeo/workforce-community-api:latest
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
     env_file: .env
+    ports:
+      - "${API_PORT:-4000}:4000"
     depends_on:
       postgres:
         condition: service_healthy
@@ -50,10 +54,15 @@ services:
         condition: service_started
       minio:
         condition: service_started
-    # First boot runs prisma migrate deploy + (SEED_DEMO) seed, then starts the API.
+    # Entrypoint runs prisma migrate deploy + (SEED_DEMO=true) seed, then starts the API.
 
   web:
-    image: ghcr.io/zedtreeo/workforce-community-web:latest
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        # Baked into the client bundle at build time. Change for a non-localhost host.
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:4000/api/v1}
     env_file: .env
     depends_on:
       - api
