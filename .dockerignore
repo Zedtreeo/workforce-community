@@ -1,0 +1,13 @@
+# Never copy build artifacts / deps into the build context — they poison the
+# incremental compile (stale tsconfig.tsbuildinfo made nest skip emitting JS).
+**/node_modules
+**/dist
+**/.next
+**/.turbo
+**/coverage
+**/*.tsbuildinfo
+.git
+.env
+.env.*
+!.env.example
+**/*.log

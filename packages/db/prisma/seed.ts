@@ -56,16 +56,11 @@ async function main() {
   const createdDepts: Record<string, any> = {};
 
   for (const name of departments) {
+    const code = name.replace(/[^A-Za-z]/g, '').slice(0, 4).toUpperCase();
     const dept = await prisma.department.upsert({
-      where: {
-        tenantId_name: { tenantId: tenant.id, name },
-      },
+      where: { tenantId_code: { tenantId: tenant.id, code } },
       update: {},
-      create: {
-        tenantId: tenant.id,
-        name,
-        description: `${name} department`,
-      },
+      create: { tenantId: tenant.id, name, code },
     });
     createdDepts[name] = dept;
   }
@@ -83,7 +78,9 @@ async function main() {
     { name: 'David Martinez', email: 'david@demo.com', dept: 'Sales', designation: 'Account Executive', salary: 68000 },
   ];
 
-  for (const emp of employees) {
+  for (let i = 0; i < employees.length; i++) {
+    const emp = employees[i];
+    const [firstName, ...rest] = emp.name.split(' ');
     await prisma.employee.upsert({
       where: {
         tenantId_email: { tenantId: tenant.id, email: emp.email },
@@ -91,13 +88,15 @@ async function main() {
       update: {},
       create: {
         tenantId: tenant.id,
-        name: emp.name,
+        employeeCode: `EMP${String(i + 1).padStart(3, '0')}`,
+        firstName,
+        lastName: rest.join(' ') || '-',
         email: emp.email,
         departmentId: createdDepts[emp.dept].id,
         designation: emp.designation,
         status: 'ACTIVE',
-        dateOfJoining: new Date('2024-01-15'),
-        baseSalary: emp.salary,
+        joinDate: new Date('2024-01-15'),
+        salary: emp.salary,
       },
     });
   }
@@ -105,9 +104,9 @@ async function main() {
 
   // ── 5. Clients ──────────────────────────────────────
   const clients = [
-    { name: 'Acme Corporation', email: 'contact@acme.com', country: 'United States', industry: 'Technology' },
-    { name: 'GlobalTech Solutions', email: 'hr@globaltech.com', country: 'United Kingdom', industry: 'IT Services' },
-    { name: 'Pacific Innovations', email: 'team@pacific.au', country: 'Australia', industry: 'Consulting' },
+    { name: 'Acme Corporation', email: 'contact@acme.com', country: 'United States' },
+    { name: 'GlobalTech Solutions', email: 'hr@globaltech.com', country: 'United Kingdom' },
+    { name: 'Pacific Innovations', email: 'team@pacific.au', country: 'Australia' },
   ];
 
   for (const client of clients) {
@@ -118,12 +117,9 @@ async function main() {
       update: {},
       create: {
         tenantId: tenant.id,
-        companyName: client.name,
+        name: client.name,
         email: client.email,
         country: client.country,
-        industry: client.industry,
-        contactPerson: client.name.split(' ')[0] + ' Manager',
-        billingCycle: 'MONTHLY',
       },
     });
   }
@@ -131,24 +127,24 @@ async function main() {
 
   // ── 6. Leave Types ──────────────────────────────────
   const leaveTypes = [
-    { name: 'Annual Leave', daysPerYear: 20, isPaid: true, description: 'Paid annual vacation leave' },
-    { name: 'Sick Leave', daysPerYear: 12, isPaid: true, description: 'Paid sick leave' },
-    { name: 'Personal Leave', daysPerYear: 5, isPaid: true, description: 'Personal day off' },
-    { name: 'Unpaid Leave', daysPerYear: 30, isPaid: false, description: 'Leave without pay' },
+    { name: 'Annual Leave', code: 'AL', defaultDays: 20, isPaid: true },
+    { name: 'Sick Leave', code: 'SL', defaultDays: 12, isPaid: true },
+    { name: 'Personal Leave', code: 'PL', defaultDays: 5, isPaid: true },
+    { name: 'Unpaid Leave', code: 'UL', defaultDays: 30, isPaid: false },
   ];
 
   for (const lt of leaveTypes) {
     await prisma.leaveType.upsert({
       where: {
-        tenantId_name: { tenantId: tenant.id, name: lt.name },
+        tenantId_code: { tenantId: tenant.id, code: lt.code },
       },
       update: {},
       create: {
         tenantId: tenant.id,
         name: lt.name,
-        daysPerYear: lt.daysPerYear,
+        code: lt.code,
+        defaultDays: lt.defaultDays,
         isPaid: lt.isPaid,
-        description: lt.description,
       },
     });
   }
@@ -177,32 +173,40 @@ async function main() {
         tenantId: tenant.id,
         name: h.name,
         date: new Date(h.date),
+        year,
       },
     });
   }
   console.log(`  Holidays: ${holidays.length} created`);
 
   // ── 8. Document Categories ──────────────────────────
-  const docCategories = ['ID Proof', 'Address Proof', 'Educational', 'Work Experience', 'Contract', 'Visa / Work Permit'];
-  for (const name of docCategories) {
+  const docCategories = [
+    { name: 'ID Proof', code: 'ID' },
+    { name: 'Address Proof', code: 'ADDR' },
+    { name: 'Educational', code: 'EDU' },
+    { name: 'Work Experience', code: 'EXP' },
+    { name: 'Contract', code: 'CONTRACT' },
+    { name: 'Visa / Work Permit', code: 'VISA' },
+  ];
+  for (const dc of docCategories) {
     await prisma.documentCategory.upsert({
       where: {
-        tenantId_name: { tenantId: tenant.id, name },
+        tenantId_code: { tenantId: tenant.id, code: dc.code },
       },
       update: {},
       create: {
         tenantId: tenant.id,
-        name,
+        name: dc.name,
+        code: dc.code,
       },
     });
   }
   console.log(`  Document Categories: ${docCategories.length} created`);
 
   console.log('\nSeed completed successfully.');
-  console.log('\n  Login credentials:');
-  console.log('  Email:    admin@demo.com');
-  console.log('  Password: Admin@123');
-  console.log('  Tenant:   demo-company\n');
+  console.log('\n  Sign in at the web app (http://localhost:3000):');
+  console.log('  Email: admin@demo.com  — a one-time code is emailed;');
+  console.log('  with the bundled Mailpit, read it at http://localhost:8025\n');
 }
 
 main()

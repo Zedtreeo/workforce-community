@@ -23,7 +23,7 @@ import { AuditModule } from '../audit/audit.module';
     BullModule.registerQueue({
       name: INVOICES_QUEUE,
       connection: {
-        host: process.env.REDIS_HOST || 'hrms-redis',
+        host: process.env.REDIS_HOST || 'redis',
         port: parseInt(process.env.REDIS_PORT || '6379', 10),
         password: process.env.REDIS_PASSWORD || undefined,
       },
